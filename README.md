@@ -4,6 +4,10 @@
 
 数据只存在本机，除你配置的模型接口外，不经过第三方服务器。
 
+> **重要：请自行配置模型 API**  
+> 本项目**不提供**任何可用的 API Key 或公共模型账号。抽取知识点、划词提问、对话讲解都依赖大模型，你必须在应用的「API」设置里填写**自己的**接口地址与 Key（如 DeepSeek、通义千问等）。  
+> Key 只保存在你本机，不会上传到本仓库或其它中间服务器。没有配置 Key 时，仍可导入文献，但无法自动抽取与问答。
+
 ---
 
 ## 支持的文献格式
@@ -42,8 +46,8 @@
 6. **知识谱**  
    只收录真正问过的概念：来自哪篇文章、问了什么、还关联了哪些知识点，并可跳回原文标注。
 
-7. **模型接口**  
-   DeepSeek、通义千问、智谱 GLM、Kimi、豆包，或任意 OpenAI Chat Completions 兼容网关；Key 只保存在本机。
+7. **模型接口（需自备 Key）**  
+   支持 DeepSeek、通义千问、智谱 GLM、Kimi、豆包，或任意 OpenAI Chat Completions 兼容网关。使用前请到服务商控制台自行申请 Key，并在应用内填写；**仓库与安装包均不包含可用 Key**。
 
 8. **桌面应用**  
    可打包为 Windows 安装版 / 便携版，数据在本机用户目录。
@@ -57,12 +61,14 @@ npm install
 npm run dev
 ```
 
-浏览器打开 [http://localhost:3000](http://localhost:3000)，在「API」里填写模型 Key。
+1. 浏览器打开 [http://localhost:3000](http://localhost:3000)。  
+2. **先到「API」页填写你自己的模型服务商、接口地址与 API Key**（必做，否则无法抽取与提问）。  
+3. 再导入链接或 PDF 开始精读。
 
-推荐默认：**DeepSeek**  
+推荐默认：**DeepSeek**（需自行注册并创建 Key）  
 - 接口：`https://api.deepseek.com/v1`  
 - 模型：`deepseek-chat`  
-- Key：[platform.deepseek.com/api_keys](https://platform.deepseek.com/api_keys)
+- 申请 Key：[platform.deepseek.com/api_keys](https://platform.deepseek.com/api_keys)
 
 抓取网页需要本机已安装 **Chrome 或 Edge**。
 
@@ -79,6 +85,8 @@ npm run dist         # 打 Windows 包，输出在 release/
 - `DeepStudy-*-portable.exe`：免安装  
 
 开发时数据在项目下 `data/`；安装 / 便携版在 `%APPDATA%\DeepStudy\data`。菜单「研迹 → 打开数据目录」可直接打开。
+
+首次打开桌面版同样要先在「导入 / API」里填入**你自己的** API Key，才能使用抽取与问答。
 
 ---
 
