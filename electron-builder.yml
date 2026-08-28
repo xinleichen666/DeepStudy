@@ -1,0 +1,36 @@
+appId: local.deepstudy.app
+productName: DeepStudy
+copyright: Copyright 研迹
+asar: true
+directories:
+  output: release
+files:
+  - electron/main.cjs
+  - package.json
+extraResources:
+  - from: .next/standalone
+    to: standalone
+    filter:
+      - "**/*"
+      - "!data"
+      - "!data/**"
+      - "!**/*.map"
+win:
+  icon: electron/icon.png
+  executableName: DeepStudy
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  shortcutName: 研迹
+  artifactName: DeepStudy-${version}-Setup.${ext}
+portable:
+  artifactName: DeepStudy-${version}-portable.${ext}
+afterPack: scripts/after-pack.cjs

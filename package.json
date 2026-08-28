@@ -1,0 +1,44 @@
+{
+  "name": "deepstudy",
+  "version": "0.1.0",
+  "private": true,
+  "description": "研迹 DeepStudy：本地文献精读与知识点问答",
+  "author": "研迹",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "next dev --webpack --hostname 127.0.0.1",
+    "dev:turbo": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "app": "node scripts/electron-dev.cjs",
+    "dist": "node scripts/dist.cjs"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "isomorphic-dompurify": "^3.19.0",
+    "jsdom": "^29.1.1",
+    "katex": "^0.18.4",
+    "lucide-react": "^1.31.0",
+    "nanoid": "^6.0.1",
+    "next": "16.3.1",
+    "pdfjs-dist": "^6.2.108",
+    "playwright-core": "^1.62.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "unpdf": "^1.8.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/jsdom": "^30.0.0",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.8.1",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.1",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
