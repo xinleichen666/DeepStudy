@@ -6,6 +6,14 @@ import { ArrowLeft, BookMarked, Highlighter, LoaderCircle, MessageSquareText, Pi
 import { ArticleView } from "@/components/ArticleView";
 import { ChatFloat } from "@/components/ChatFloat";
 import { MessageBody } from "@/components/MessageBody";
+import {
+  PAGE_ZOOM_DEFAULT,
+  PAGE_ZOOM_STEP,
+  PageZoomControls,
+  clampPageZoom,
+  persistPageZoom,
+  readStoredPageZoom,
+} from "@/components/PageZoom";
 import { SelectionMenu } from "@/components/SelectionMenu";
 import { classifySelectionAsk, extractArticle, fetchArticle, refreshArticle, streamChat } from "@/lib/client";
 import type { ArticleDetail, ChatMessage, KnowledgePoint } from "@/lib/types";
@@ -33,10 +41,52 @@ export function Reader({
   const [kpsPinned, setKpsPinned] = useState(false);
   const [openedIds, setOpenedIds] = useState<string[]>(() => (initialKp ? [initialKp] : []));
   const [streamingFor, setStreamingFor] = useState<string | null>(null);
+  const [pageZoom, setPageZoom] = useState(PAGE_ZOOM_DEFAULT);
+
+  useEffect(() => {
+    setPageZoom(readStoredPageZoom());
+  }, []);
+
+  useEffect(() => {
+    function onWheel(event: WheelEvent) {
+      if (!event.ctrlKey && !event.metaKey) return;
+      const target = event.target as Element | null;
+      if (target?.closest(".chat-float, .reader-kps, .reader-topbar, .reader-history, .select-pop")) {
+        return;
+      }
+      event.preventDefault();
+      setPageZoom((current) => persistPageZoom(current + (event.deltaY < 0 ? PAGE_ZOOM_STEP : -PAGE_ZOOM_STEP)));
+    }
+    function onKey(event: KeyboardEvent) {
+      if (!event.ctrlKey && !event.metaKey) return;
+      const tag = (event.target as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (event.key === "=" || event.key === "+") {
+        event.preventDefault();
+        setPageZoom((current) => persistPageZoom(current + PAGE_ZOOM_STEP));
+      } else if (event.key === "-" || event.key === "_") {
+        event.preventDefault();
+        setPageZoom((current) => persistPageZoom(current - PAGE_ZOOM_STEP));
+      } else if (event.key === "0") {
+        event.preventDefault();
+        setPageZoom(persistPageZoom(PAGE_ZOOM_DEFAULT));
+      }
+    }
+    window.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, []);
 
   useEffect(() => {
     setDetail(initial);
   }, [articleId, initial]);
+
+  function changePageZoom(next: number) {
+    setPageZoom(persistPageZoom(clampPageZoom(next)));
+  }
 
   const load = useCallback(async () => {
     const next = await fetchArticle(articleId);
@@ -203,6 +253,8 @@ export function Reader({
             {discussed.length ? ` · 已标注 ${discussed.length} 个问过的知识点` : ""}
           </p>
         </div>
+        <PageZoomControls value={pageZoom} onChange={changePageZoom} />
+        <PageZoomControls className="page-zoom-dock" value={pageZoom} onChange={changePageZoom} />
         {detail.article.sourceUrl ? (
           <button type="button" className="ghost-btn" onClick={runRefresh} disabled={refreshing}>
             {refreshing ? <LoaderCircle size={16} className="spin" /> : <RefreshCw size={16} />}
@@ -243,6 +295,7 @@ export function Reader({
         pageTexts={detail.article.pageTexts.length ? detail.article.pageTexts : [detail.article.text]}
         points={detail.knowledgePoints}
         activeId={activeId ?? undefined}
+        pageZoom={pageZoom}
         onSelect={(id) => openPoint(id)}
       />
 

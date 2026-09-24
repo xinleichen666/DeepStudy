@@ -669,7 +669,8 @@ body { margin: 0; }
   z-index: 30;
   display: flex;
   align-items: center;
-  gap: 18px;
+  flex-wrap: wrap;
+  gap: 12px 18px;
   padding: 12px 20px;
   background: #f7f7f7;
   border-bottom: 1px solid #d8d8d8;
@@ -685,6 +686,39 @@ body { margin: 0; }
   text-overflow: ellipsis;
 }
 .reader-title p { margin: 4px 0 0; color: #666; font-size: 12px; }
+.page-zoom {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 3px;
+  border: 1px solid #d8d8d8;
+  border-radius: 999px;
+  background: #fff;
+}
+.page-zoom-dock {
+  position: fixed;
+  left: 18px;
+  bottom: 18px;
+  z-index: 45;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
+}
+.page-zoom-btn {
+  width: 32px;
+  min-width: 32px;
+  padding: 0 !important;
+}
+.page-zoom-label {
+  padding-left: 8px;
+  font-size: 12px;
+  color: #333;
+}
+.page-zoom-value {
+  min-width: 52px;
+  padding-inline: 8px !important;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
 .reader-error { padding: 0 28px; }
 
 .reader-grid {

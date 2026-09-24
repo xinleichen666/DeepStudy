@@ -13,6 +13,7 @@ export function ArticleView({
   pageTexts,
   points,
   activeId,
+  pageZoom = 100,
   onSelect,
 }: {
   sourceType: "url" | "pdf";
@@ -22,11 +23,18 @@ export function ArticleView({
   pageTexts: string[];
   points: KnowledgePoint[];
   activeId?: string;
+  pageZoom?: number;
   onSelect: (id: string) => void;
 }) {
   if (sourceType === "pdf" && fileUrl) {
     return (
-      <PdfOriginalView fileUrl={fileUrl} points={points} activeId={activeId} onSelect={onSelect} />
+      <PdfOriginalView
+        fileUrl={fileUrl}
+        points={points}
+        activeId={activeId}
+        pageZoom={pageZoom}
+        onSelect={onSelect}
+      />
     );
   }
 
@@ -37,6 +45,7 @@ export function ArticleView({
       pageTexts={pageTexts}
       points={points}
       activeId={activeId}
+      pageZoom={pageZoom}
       onSelect={onSelect}
     />
   );
@@ -48,6 +57,7 @@ function HtmlOriginalView({
   pageTexts,
   points,
   activeId,
+  pageZoom,
   onSelect,
 }: {
   title: string;
@@ -55,6 +65,7 @@ function HtmlOriginalView({
   pageTexts: string[];
   points: KnowledgePoint[];
   activeId?: string;
+  pageZoom: number;
   onSelect: (id: string) => void;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -62,7 +73,7 @@ function HtmlOriginalView({
 
   return (
     <div className="doc-stage">
-      <div className="doc-page" ref={rootRef}>
+      <div className="doc-page" ref={rootRef} style={{ zoom: pageZoom / 100 }}>
         {!hasHeading ? (
           <header className="doc-masthead">
             <h1>{title}</h1>
@@ -83,7 +94,7 @@ function HtmlOriginalView({
           points={points}
           activeId={activeId}
           onSelect={onSelect}
-          deps={[html, pageTexts]}
+          deps={[html, pageTexts, pageZoom]}
         />
       </div>
     </div>

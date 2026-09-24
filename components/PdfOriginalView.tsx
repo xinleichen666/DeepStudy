@@ -3,19 +3,35 @@
 import { useEffect, useRef, useState } from "react";
 import type { KnowledgePoint } from "@/lib/types";
 import { HighlightMarks } from "@/components/HighlightMarks";
+import { installPdfjsMapPolyfill } from "@/lib/pdfjs-map-polyfill";
 
 type PdfModule = typeof import("pdfjs-dist");
 type PdfDocument = import("pdfjs-dist").PDFDocumentProxy;
+
+const PDF_WORKER_SRC = "/pdf.worker.entry.mjs";
+const PDF_CMAP_URL = "/pdfjs/cmaps/";
+const PDF_FONT_URL = "/pdfjs/standard_fonts/";
+const PDF_WASM_URL = "/pdfjs/wasm/";
+const PDF_ICC_URL = "/pdfjs/iccs/";
+
+async function loadPdfjs(): Promise<PdfModule> {
+  installPdfjsMapPolyfill();
+  const pdfjs: PdfModule = await import("pdfjs-dist");
+  pdfjs.GlobalWorkerOptions.workerSrc = PDF_WORKER_SRC;
+  return pdfjs;
+}
 
 export function PdfOriginalView({
   fileUrl,
   points,
   activeId,
+  pageZoom = 100,
   onSelect,
 }: {
   fileUrl: string;
   points: KnowledgePoint[];
   activeId?: string;
+  pageZoom?: number;
   onSelect: (id: string) => void;
 }) {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -32,9 +48,17 @@ export function PdfOriginalView({
     setError("");
     setPageCount(0);
     (async () => {
-      const pdfjs: PdfModule = await import("pdfjs-dist");
-      pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
-      const pdf = await pdfjs.getDocument({ url: fileUrl }).promise;
+      const pdfjs = await loadPdfjs();
+      const pdf = await pdfjs.getDocument({
+        url: fileUrl,
+        cMapUrl: PDF_CMAP_URL,
+        cMapPacked: true,
+        standardFontDataUrl: PDF_FONT_URL,
+        wasmUrl: PDF_WASM_URL,
+        iccUrl: PDF_ICC_URL,
+        useSystemFonts: true,
+        useWorkerFetch: true,
+      }).promise;
       if (cancelled) {
         await pdf.cleanup();
         return;
@@ -85,10 +109,10 @@ export function PdfOriginalView({
     setReady(false);
 
     (async () => {
-      const pdfjs: PdfModule = await import("pdfjs-dist");
+      const pdfjs = await loadPdfjs();
       const first = await pdf.getPage(1);
       if (cancelled) return;
-      const ratio = width / first.getViewport({ scale: 1 }).width;
+      const ratio = (width * (pageZoom / 100)) / first.getViewport({ scale: 1 }).width;
 
       for (let number = 1; number <= pdf.numPages; number += 1) {
         if (cancelled) return;
@@ -132,7 +156,7 @@ export function PdfOriginalView({
     return () => {
       cancelled = true;
     };
-  }, [pageCount, width, fileUrl]);
+  }, [pageCount, width, fileUrl, pageZoom]);
 
   if (error) {
     return <p className="form-error reader-error">{error}</p>;
@@ -152,7 +176,7 @@ export function PdfOriginalView({
           points={points}
           activeId={activeId}
           onSelect={onSelect}
-          deps={[ready, width, pageCount]}
+          deps={[ready, width, pageCount, pageZoom]}
         />
       </div>
       {!ready && pageCount > 0 ? <p className="pdf-status">正在按原文页式渲染…</p> : null}
