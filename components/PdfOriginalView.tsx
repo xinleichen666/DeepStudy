@@ -56,7 +56,8 @@ export function PdfOriginalView({
         standardFontDataUrl: PDF_FONT_URL,
         wasmUrl: PDF_WASM_URL,
         iccUrl: PDF_ICC_URL,
-        useSystemFonts: true,
+        useSystemFonts: false,
+        disableFontFace: true,
         useWorkerFetch: true,
       }).promise;
       if (cancelled) {
@@ -112,7 +113,7 @@ export function PdfOriginalView({
       const pdfjs = await loadPdfjs();
       const first = await pdf.getPage(1);
       if (cancelled) return;
-      const ratio = (width * (pageZoom / 100)) / first.getViewport({ scale: 1 }).width;
+      const ratio = width / first.getViewport({ scale: 1 }).width;
 
       for (let number = 1; number <= pdf.numPages; number += 1) {
         if (cancelled) return;
@@ -156,7 +157,7 @@ export function PdfOriginalView({
     return () => {
       cancelled = true;
     };
-  }, [pageCount, width, fileUrl, pageZoom]);
+  }, [pageCount, width, fileUrl]);
 
   if (error) {
     return <p className="form-error reader-error">{error}</p>;
@@ -164,7 +165,7 @@ export function PdfOriginalView({
 
   return (
     <div className="pdf-stage" ref={stageRef}>
-      <div className="pdf-pages" ref={pagesRef}>
+      <div className="pdf-pages" ref={pagesRef} style={{ zoom: pageZoom / 100 }}>
         {Array.from({ length: pageCount }, (_, index) => (
           <div key={index + 1} className="pdf-page" data-page={index + 1}>
             <canvas />
@@ -176,7 +177,7 @@ export function PdfOriginalView({
           points={points}
           activeId={activeId}
           onSelect={onSelect}
-          deps={[ready, width, pageCount, pageZoom]}
+          deps={[ready, width, pageCount]}
         />
       </div>
       {!ready && pageCount > 0 ? <p className="pdf-status">正在按原文页式渲染…</p> : null}

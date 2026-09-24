@@ -29,6 +29,8 @@ export function HighlightMarks({
   useEffect(() => {
     if (!root) return;
     const measure = () => {
+      const zoom = Number(getComputedStyle(root).zoom);
+      const scale = Number.isFinite(zoom) && zoom > 0 ? zoom : 1;
       const next: Array<OverlayRect & { id: string }> = [];
       for (const point of discussed) {
         const scoped = point.page
@@ -43,10 +45,10 @@ export function HighlightMarks({
         for (const box of boxes) {
           next.push({
             id: point.id,
-            top: box.top + (scope === root ? 0 : shiftTop),
-            left: box.left + (scope === root ? 0 : shiftLeft),
-            width: box.width,
-            height: box.height,
+            top: (box.top + (scope === root ? 0 : shiftTop)) / scale,
+            left: (box.left + (scope === root ? 0 : shiftLeft)) / scale,
+            width: box.width / scale,
+            height: box.height / scale,
           });
         }
       }
