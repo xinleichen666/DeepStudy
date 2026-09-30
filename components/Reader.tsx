@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, BookMarked, Highlighter, LoaderCircle, MessageSquareText, Pin, RefreshCw } from "lucide-react";
 import { ArticleView } from "@/components/ArticleView";
@@ -10,9 +10,12 @@ import {
   PAGE_ZOOM_DEFAULT,
   PAGE_ZOOM_STEP,
   PageZoomControls,
+  type PageZoomAnchor,
+  capturePageZoomAnchor,
   clampPageZoom,
   persistPageZoom,
   readStoredPageZoom,
+  restorePageZoomAnchor,
 } from "@/components/PageZoom";
 import { SelectionMenu } from "@/components/SelectionMenu";
 import { classifySelectionAsk, extractArticle, fetchArticle, refreshArticle, streamChat } from "@/lib/client";
@@ -42,10 +45,27 @@ export function Reader({
   const [openedIds, setOpenedIds] = useState<string[]>(() => (initialKp ? [initialKp] : []));
   const [streamingFor, setStreamingFor] = useState<string | null>(null);
   const [pageZoom, setPageZoom] = useState(PAGE_ZOOM_DEFAULT);
+  const pageZoomRef = useRef(pageZoom);
+  const zoomAnchor = useRef<PageZoomAnchor | null>(null);
+  pageZoomRef.current = pageZoom;
+
+  const changePageZoom = useCallback((next: number) => {
+    const value = persistPageZoom(clampPageZoom(next));
+    if (value === pageZoomRef.current) return;
+    zoomAnchor.current = capturePageZoomAnchor();
+    setPageZoom(value);
+  }, []);
+
+  useLayoutEffect(() => {
+    const anchor = zoomAnchor.current;
+    if (!anchor) return;
+    zoomAnchor.current = null;
+    restorePageZoomAnchor(anchor);
+  }, [pageZoom]);
 
   useEffect(() => {
-    setPageZoom(readStoredPageZoom());
-  }, []);
+    changePageZoom(readStoredPageZoom());
+  }, [changePageZoom]);
 
   useEffect(() => {
     function onWheel(event: WheelEvent) {
@@ -55,7 +75,8 @@ export function Reader({
         return;
       }
       event.preventDefault();
-      setPageZoom((current) => persistPageZoom(current + (event.deltaY < 0 ? PAGE_ZOOM_STEP : -PAGE_ZOOM_STEP)));
+      const step = event.deltaY < 0 ? PAGE_ZOOM_STEP : -PAGE_ZOOM_STEP;
+      changePageZoom(pageZoomRef.current + step);
     }
     function onKey(event: KeyboardEvent) {
       if (!event.ctrlKey && !event.metaKey) return;
@@ -63,13 +84,13 @@ export function Reader({
       if (tag === "INPUT" || tag === "TEXTAREA") return;
       if (event.key === "=" || event.key === "+") {
         event.preventDefault();
-        setPageZoom((current) => persistPageZoom(current + PAGE_ZOOM_STEP));
+        changePageZoom(pageZoomRef.current + PAGE_ZOOM_STEP);
       } else if (event.key === "-" || event.key === "_") {
         event.preventDefault();
-        setPageZoom((current) => persistPageZoom(current - PAGE_ZOOM_STEP));
+        changePageZoom(pageZoomRef.current - PAGE_ZOOM_STEP);
       } else if (event.key === "0") {
         event.preventDefault();
-        setPageZoom(persistPageZoom(PAGE_ZOOM_DEFAULT));
+        changePageZoom(PAGE_ZOOM_DEFAULT);
       }
     }
     window.addEventListener("wheel", onWheel, { passive: false });
@@ -78,15 +99,11 @@ export function Reader({
       window.removeEventListener("wheel", onWheel);
       window.removeEventListener("keydown", onKey);
     };
-  }, []);
+  }, [changePageZoom]);
 
   useEffect(() => {
     setDetail(initial);
   }, [articleId, initial]);
-
-  function changePageZoom(next: number) {
-    setPageZoom(persistPageZoom(clampPageZoom(next)));
-  }
 
   const load = useCallback(async () => {
     const next = await fetchArticle(articleId);

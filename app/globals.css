@@ -733,6 +733,13 @@ body { margin: 0; }
   padding: 20px 0 96px;
   min-width: 0;
   overflow-x: auto;
+  overflow-anchor: none;
+}
+.pdf-pages,
+.pdf-page,
+.doc-page,
+.doc-plain {
+  overflow-anchor: none;
 }
 .pdf-pages,
 .doc-page {
@@ -829,15 +836,26 @@ body { margin: 0; }
   position: relative;
   background: #fff;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  --user-unit: 1;
+  --total-scale-factor: calc(var(--scale-factor) * var(--user-unit));
+  --scale-round-x: 1px;
+  --scale-round-y: 1px;
 }
 .pdf-page canvas { display: block; }
 .pdf-page .textLayer {
   position: absolute;
   inset: 0;
-  overflow: hidden;
+  overflow: clip;
   line-height: 1;
+  letter-spacing: normal;
+  word-spacing: normal;
   opacity: 1;
   pointer-events: auto;
+  text-size-adjust: none;
+  transform-origin: 0 0;
+  --min-font-size: 1;
+  --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+  --min-font-size-inv: calc(1 / var(--min-font-size));
 }
 .pdf-page .textLayer :is(span, br) {
   color: transparent;
@@ -845,6 +863,28 @@ body { margin: 0; }
   white-space: pre;
   cursor: text;
   transform-origin: 0% 0%;
+  user-select: text;
+  z-index: 1;
+  --font-height: 0;
+  --scale-x: 1;
+  --rotate: 0deg;
+  font-size: calc(var(--text-scale-factor) * var(--font-height));
+  transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+}
+.pdf-page .textLayer ::selection {
+  background-color: transparent;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+.pdf-page .select-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.pdf-page .text-select {
+  position: absolute;
+  background: rgba(0, 0, 255, 0.22);
 }
 .pdf-status {
   text-align: center;
@@ -856,10 +896,9 @@ body { margin: 0; }
 .mark-layer { position: absolute; inset: 0; pointer-events: none; }
 .mark {
   position: absolute;
-  pointer-events: auto;
+  pointer-events: none;
   border: 0;
   border-radius: 2px;
-  cursor: pointer;
   mix-blend-mode: multiply;
 }
 .mark.active { outline: 2px solid #9e2a22; outline-offset: 1px; }

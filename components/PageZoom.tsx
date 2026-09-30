@@ -28,6 +28,66 @@ export function persistPageZoom(value: number) {
   return next;
 }
 
+export type PageZoomAnchor = {
+  selector: string;
+  ratioY: number;
+  ratioX: number;
+};
+
+function zoomPages() {
+  const pdfPages = [...document.querySelectorAll<HTMLElement>(".pdf-page[data-page]")];
+  if (pdfPages.length) return pdfPages;
+  const sections = [...document.querySelectorAll<HTMLElement>(".doc-plain[data-page]")];
+  if (sections.length) return sections;
+  const doc = document.querySelector<HTMLElement>(".doc-page");
+  return doc ? [doc] : [];
+}
+
+export function capturePageZoomAnchor(): PageZoomAnchor | null {
+  const pages = zoomPages();
+  if (!pages.length) return null;
+  const cy = window.innerHeight / 2;
+  const cx = window.innerWidth / 2;
+  let page = pages.find((item) => {
+    const rect = item.getBoundingClientRect();
+    return cy >= rect.top && cy <= rect.bottom;
+  });
+  if (!page) {
+    page = pages.reduce((best, item) => {
+      const rect = item.getBoundingClientRect();
+      const bestRect = best.getBoundingClientRect();
+      const dist = cy < rect.top ? rect.top - cy : cy - rect.bottom;
+      const bestDist = cy < bestRect.top ? bestRect.top - cy : cy - bestRect.bottom;
+      return dist < bestDist ? item : best;
+    });
+  }
+  const rect = page.getBoundingClientRect();
+  if (rect.height < 1 || rect.width < 1) return null;
+  const pageNo = page.dataset.page;
+  const selector = page.classList.contains("pdf-page")
+    ? `.pdf-page[data-page="${pageNo}"]`
+    : page.classList.contains("doc-plain")
+      ? `.doc-plain[data-page="${pageNo}"]`
+      : ".doc-page";
+  return {
+    selector,
+    ratioY: (cy - rect.top) / rect.height,
+    ratioX: (cx - rect.left) / rect.width,
+  };
+}
+
+export function restorePageZoomAnchor(anchor: PageZoomAnchor | null) {
+  if (!anchor) return;
+  const page = document.querySelector<HTMLElement>(anchor.selector);
+  if (!page) return;
+  const rect = page.getBoundingClientRect();
+  const dy = rect.top + anchor.ratioY * rect.height - window.innerHeight / 2;
+  const dx = rect.left + anchor.ratioX * rect.width - window.innerWidth / 2;
+  if (Math.abs(dy) > 1) window.scrollBy(0, dy);
+  const scroller = page.closest<HTMLElement>(".pdf-stage, .doc-stage");
+  if (scroller && Math.abs(dx) > 1) scroller.scrollLeft += dx;
+}
+
 export function PageZoomControls({
   value,
   onChange,

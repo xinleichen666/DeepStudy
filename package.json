@@ -12,7 +12,8 @@
     "start": "next start",
     "lint": "eslint",
     "app": "node scripts/electron-dev.cjs",
-    "dist": "node scripts/dist.cjs"
+    "dist": "node scripts/dist.cjs",
+    "arxiv-pic": "node scripts/arxiv-pic-daily.mjs"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",

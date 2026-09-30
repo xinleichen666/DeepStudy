@@ -187,7 +187,10 @@ export function ChatFloat({
       current?.querySelector(".bubble.pending") ||
       current?.querySelector(".bubble:last-of-type") ||
       current;
-    focus?.scrollIntoView({ block: "end", behavior: "smooth" });
+    if (!(focus instanceof HTMLElement)) return;
+    const logRect = log.getBoundingClientRect();
+    const focusRect = focus.getBoundingClientRect();
+    log.scrollTop += focusRect.bottom - logRect.bottom + 8;
   }, [activeId, messages.length, streaming, sending]);
 
   function persistSize(size: { w: number; h: number }, origin?: { x: number; y: number; fromLeft: number; fromTop: number }) {
