@@ -1,9 +1,12 @@
+import { applyEnvApiKey } from "./api-key";
 import { resolveSettings } from "./providers";
+import { buildOverviewPrompt, parseTopicOverview, type LibraryContext } from "./topic";
 import type {
   Article,
   ChatMessage,
   KnowledgePoint,
   Settings,
+  TopicOverview,
 } from "./types";
 
 type ChatTurn = {
@@ -20,9 +23,9 @@ export class LlmError extends Error {
 }
 
 function assertReady(settings: Settings) {
-  const resolved = resolveSettings(settings);
+  const resolved = applyEnvApiKey(resolveSettings(settings));
   if (!resolved.apiKey.trim()) {
-    throw new LlmError("请先在设置中填写国产模型 API Key");
+    throw new LlmError("请先在设置中填写 API Key，或设置环境变量 DEEPSEEK_API_KEY / DEEPSTUDY_API_KEY");
   }
   if (!resolved.baseUrl.trim()) {
     throw new LlmError("请填写模型接口地址");
@@ -33,19 +36,29 @@ function assertReady(settings: Settings) {
   return resolved;
 }
 
-async function complete(settings: Settings, messages: ChatTurn[], temperature = 0.3) {
+async function complete(
+  settings: Settings,
+  messages: ChatTurn[],
+  temperature = 0.3,
+  extra?: { maxTokens?: number; json?: boolean },
+) {
   const resolved = assertReady(settings);
+  const payload: Record<string, unknown> = {
+    model: resolved.model,
+    temperature,
+    messages,
+  };
+  if (extra?.maxTokens) payload.max_tokens = extra.maxTokens;
+  if (extra?.json && (resolved.provider === "deepseek" || resolved.baseUrl.includes("api.deepseek.com"))) {
+    payload.response_format = { type: "json_object" };
+  }
   const response = await fetch(`${resolved.baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${resolved.apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model: resolved.model,
-      temperature,
-      messages,
-    }),
+    body: JSON.stringify(payload),
   });
 
   const raw = await response.text();
@@ -487,6 +500,24 @@ export function collectMentions(text: string, points: KnowledgePoint[], currentI
     if (point.name.length >= 2 && text.includes(point.name)) related.add(point.id);
   }
   return [...related];
+}
+
+export async function generateTopicOverview(
+  settings: Settings,
+  title: string,
+  library: LibraryContext,
+  generatedAt: string,
+) {
+  const content = await complete(settings, buildOverviewPrompt(title, library), 0.2, {
+    maxTokens: 4096,
+    json: true,
+  });
+  const overview: TopicOverview = parseTopicOverview(
+    content,
+    library.matched.map((item) => item.id),
+    generatedAt,
+  );
+  return overview;
 }
 
 export async function testConnection(settings: Settings) {

@@ -21,7 +21,7 @@ export function ReaderShell({
   articleId: string;
   children: React.ReactNode;
   history?: LibraryCard[];
-  api?: { settings: Settings; hasKey: boolean };
+  api?: { settings: Settings; hasKey: boolean; keySource?: "saved" | "env" | "none" };
   importError?: string;
   settingsMessage?: string;
   settingsError?: string;

@@ -1516,3 +1516,170 @@ body { margin: 0; }
   .page-pad { padding: 28px 18px 64px; }
   .hero h1 { font-size: 32px; }
 }
+
+.mobile-nav { display: none; }
+
+.topic-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+  margin-top: 8px;
+}
+.topic-side,
+.topic-block,
+.topic-chat,
+.topic-compose {
+  background: rgba(255, 250, 240, 0.78);
+  border: 1px solid rgba(35, 28, 20, 0.08);
+  box-shadow: var(--shadow);
+}
+.topic-side {
+  position: sticky;
+  top: 18px;
+  padding: 16px;
+  border-radius: 28px;
+}
+.topic-compose textarea,
+.topic-ask textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: #fffaf1;
+  color: var(--ink);
+  border-radius: 16px;
+  padding: 14px 16px;
+  font: inherit;
+  resize: vertical;
+}
+.topic-compose label,
+.topic-ask {
+  display: grid;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+.topic-list { display: grid; gap: 8px; margin-top: 16px; }
+.topic-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  border-radius: 18px;
+  padding: 4px 4px 4px 8px;
+}
+.topic-item.active { background: rgba(35, 28, 20, 0.06); }
+.topic-item-main {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  padding: 8px;
+}
+.topic-item-main strong,
+.topic-head h2 {
+  display: block;
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.topic-item-main span {
+  display: block;
+  margin-top: 4px;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+.topic-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+.topic-head h2 { font-size: 32px; margin: 6px 0 0; }
+.topic-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.topic-block { border-radius: 24px; padding: 18px 18px 8px; }
+.topic-prose .md-p,
+.topic-prose .md-ul,
+.topic-prose .md-quote { font-size: 15px; line-height: 1.75; }
+.topic-prose .md-h { font-size: 15px; }
+.topic-defs,
+.topic-questions,
+.topic-reading,
+.topic-papers { margin: 8px 0 12px; padding: 0; list-style: none; display: grid; gap: 12px; }
+.topic-questions { list-style: decimal; padding-left: 1.2em; }
+.topic-defs strong,
+.topic-reading strong { display: block; margin-bottom: 4px; }
+.topic-papers a { color: var(--indigo); }
+.topic-keywords { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
+.topic-keywords span,
+.topic-prompts button {
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: rgba(42, 63, 85, 0.08);
+  color: var(--indigo);
+  font-size: 12px;
+}
+.topic-chat { margin-top: 18px; padding: 18px; border-radius: 28px; }
+.topic-log { display: grid; gap: 10px; margin: 12px 0; }
+.topic-bubble {
+  border-radius: 18px;
+  padding: 12px 14px;
+  background: rgba(255, 250, 240, 0.9);
+  border: 1px solid var(--line);
+}
+.topic-bubble > span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--cinnabar);
+}
+.topic-bubble.user {
+  background: var(--indigo);
+  color: #f6f1e6;
+  margin-left: 12%;
+}
+.topic-bubble.user > span { color: rgba(246, 241, 230, 0.72); }
+.topic-bubble.user .md-p,
+.topic-bubble.user .md-h,
+.topic-bubble.user .md-ul { color: #f6f1e6; }
+.topic-prompts { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.topic-prompts button {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+.topic-prompts button:disabled { opacity: 0.45; cursor: not-allowed; }
+.topic-ask { grid-template-columns: 1fr auto; align-items: end; }
+.topic-ask textarea { color: var(--ink); }
+
+@media (max-width: 1100px) {
+  .mobile-nav {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px 0;
+    overflow-x: auto;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: rgba(243, 234, 214, 0.94);
+  }
+  .mobile-nav .rail-link { white-space: nowrap; }
+}
+@media (max-width: 980px) {
+  .topic-layout,
+  .topic-grid,
+  .topic-ask { grid-template-columns: 1fr; }
+  .topic-side { position: static; }
+  .topic-head { flex-direction: column; }
+  .topic-head h2 { font-size: 26px; }
+  .topic-bubble.user { margin-left: 0; }
+}

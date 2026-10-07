@@ -11,6 +11,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "node --experimental-strip-types --test lib/topic.test.ts lib/api-key.test.ts",
     "app": "node scripts/electron-dev.cjs",
     "dist": "node scripts/dist.cjs",
     "arxiv-pic": "node scripts/arxiv-pic-daily.mjs"
