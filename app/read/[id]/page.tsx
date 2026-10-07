@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { Reader } from "@/components/Reader";
 import { ReaderShell } from "@/components/ReaderShell";
 import { loadArticleView, loadLibraryCards } from "@/lib/load-article";
+import { apiKeyStatus } from "@/lib/api-key";
+import { resolveSettings } from "@/lib/providers";
 import { getSettings, publicSettings } from "@/lib/store";
 
 export const maxDuration = 120;
@@ -31,7 +33,10 @@ export default async function ReadPage({
         importError={query.importError}
         settingsMessage={query.saved === "1" ? "API 接口已保存到本机。" : query.saved}
         settingsError={query.settingsError}
-        api={{ settings: publicSettings(settings), hasKey: Boolean(settings.apiKey) }}
+        api={{
+          settings: publicSettings(settings),
+          ...apiKeyStatus(resolveSettings(settings)),
+        }}
       >
         <Reader articleId={id} initial={detail} initialKp={query.kp} />
       </ReaderShell>

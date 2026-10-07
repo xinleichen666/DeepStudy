@@ -5,11 +5,13 @@ import { DEFAULT_SETTINGS } from "./providers";
 import type {
   Article,
   ChatMessage,
-  Conversation,
   Database,
   KnowledgeMention,
   KnowledgePoint,
   Settings,
+  Topic,
+  TopicMessage,
+  TopicOverview,
 } from "./types";
 import { dataDir } from "./data-dir";
 import { nowIso } from "./utils";
@@ -25,6 +27,8 @@ const emptyDb = (): Database => ({
   conversations: [],
   messages: [],
   mentions: [],
+  topics: [],
+  topicMessages: [],
 });
 
 let queue: Promise<unknown> = Promise.resolve();
@@ -54,6 +58,8 @@ async function readDb(): Promise<Database> {
       conversations: parsed.conversations ?? [],
       messages: parsed.messages ?? [],
       mentions: parsed.mentions ?? [],
+      topics: Array.isArray(parsed.topics) ? parsed.topics : [],
+      topicMessages: Array.isArray(parsed.topicMessages) ? parsed.topicMessages : [],
     };
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
@@ -117,6 +123,21 @@ export async function saveSettings(patch: Partial<Settings>) {
 export async function listArticles() {
   const db = await getDb();
   return [...db.articles].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+}
+
+export async function listLibraryBriefs() {
+  const db = await getDb();
+  return db.articles.map((article) => ({
+    id: article.id,
+    title: article.title,
+    summary: article.summary,
+    updatedAt: article.updatedAt,
+    textSample: article.text.slice(0, 6000).replace(/\s+/g, " ").trim().slice(0, 1800),
+    points: db.knowledgePoints
+      .filter((item) => item.articleId === article.id)
+      .slice(0, 24)
+      .map((item) => ({ name: item.name, definition: item.definition })),
+  }));
 }
 
 export async function getArticleDetail(id: string) {
@@ -377,6 +398,84 @@ export async function addMentions(mentions: Omit<KnowledgeMention, "id" | "creat
     db.mentions.push(...created);
   });
   return created;
+}
+
+export async function listTopics() {
+  const db = await getDb();
+  return [...db.topics]
+    .map((topic) => ({
+      id: topic.id,
+      title: topic.title,
+      createdAt: topic.createdAt,
+      updatedAt: topic.updatedAt,
+      hasOverview: Boolean(topic.overview),
+      messageCount: db.topicMessages.filter((item) => item.topicId === topic.id).length,
+    }))
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+}
+
+export async function getTopicDetail(id: string) {
+  const db = await getDb();
+  const topic = db.topics.find((item) => item.id === id);
+  if (!topic) return null;
+  const messages = db.topicMessages
+    .filter((item) => item.topicId === id)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const used = topic.overview?.usedArticleIds ?? [];
+  const articles = used.flatMap((articleId) => {
+    const article = db.articles.find((item) => item.id === articleId);
+    return article ? [{ id: article.id, title: article.title, summary: article.summary }] : [];
+  });
+  return { topic, messages, articles };
+}
+
+export async function createTopic(title: string) {
+  const clean = title.replace(/\s+/g, " ").trim();
+  if (clean.length < 2) throw new Error("课题至少两个字");
+  const stamp = nowIso();
+  const topic: Topic = {
+    id: nanoid(),
+    title: clean.slice(0, 80),
+    overview: null,
+    createdAt: stamp,
+    updatedAt: stamp,
+  };
+  await updateDb((db) => {
+    db.topics.unshift(topic);
+  });
+  return topic;
+}
+
+export async function saveTopicOverview(id: string, overview: TopicOverview) {
+  return updateDb((db) => {
+    const topic = db.topics.find((item) => item.id === id);
+    if (!topic) throw new Error("课题不存在");
+    topic.overview = overview;
+    topic.updatedAt = overview.generatedAt || nowIso();
+    return topic;
+  });
+}
+
+export async function deleteTopic(id: string) {
+  await updateDb((db) => {
+    db.topics = db.topics.filter((item) => item.id !== id);
+    db.topicMessages = db.topicMessages.filter((item) => item.topicId !== id);
+  });
+}
+
+export async function appendTopicMessage(input: Omit<TopicMessage, "id" | "createdAt">) {
+  const message: TopicMessage = {
+    ...input,
+    id: nanoid(),
+    createdAt: nowIso(),
+  };
+  await updateDb((db) => {
+    const topic = db.topics.find((item) => item.id === input.topicId);
+    if (!topic) throw new Error("课题不存在");
+    db.topicMessages.push(message);
+    topic.updatedAt = message.createdAt;
+  });
+  return message;
 }
 
 export async function getKnowledgeTrace() {

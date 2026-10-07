@@ -14,12 +14,13 @@ export function ApiSettingsForm({
 }: {
   compact?: boolean;
   back?: string;
-  initial?: { settings: Settings; hasKey: boolean };
+  initial?: { settings: Settings; hasKey: boolean; keySource?: "saved" | "env" | "none" };
   message?: string;
   error?: string;
 }) {
   const form = initial?.settings;
   const hasKey = initial?.hasKey ?? false;
+  const keySource = initial?.keySource ?? (hasKey ? "saved" : "none");
   if (!form) {
     return <p className="muted">正在读取 API 配置…</p>;
   }
@@ -57,14 +58,15 @@ export function ApiSettingsForm({
       </div>
 
       <label>
-        API Key {hasKey ? <em>已保存</em> : <em>未填写</em>}
+        API Key {keySource === "env" ? <em>环境变量</em> : hasKey ? <em>已保存</em> : <em>未填写</em>}
         <input
           type="password"
           name="apiKey"
           defaultValue={form.apiKey}
-          placeholder={hasKey ? "留空则保持原 Key" : "sk-..."}
+          placeholder={keySource === "env" ? "留空则继续使用环境变量" : hasKey ? "留空则保持原 Key" : "sk-..."}
           autoComplete="off"
         />
+        <small>未在本机保存 Key 时，DeepSeek 读取 DEEPSEEK_API_KEY，其它服务读取 DEEPSTUDY_API_KEY。Key 不会写入仓库。</small>
         {provider?.keyUrl ? (
           <small>
             申请地址：
@@ -96,9 +98,11 @@ export function ApiSettingsForm({
           <p className="kicker">模型 API 接口</p>
           <h2>接入国内大模型</h2>
           <p>
-            {hasKey
-              ? `已连接 ${provider?.name ?? "自定义接口"} · ${form.model}`
-              : "先填写接口地址和 Key，研迹才能抽知识点并回答提问。"}
+            {keySource === "env"
+              ? `已从环境变量读取 Key · ${form.model}。在这里填写并保存后，改用本机 Key。`
+              : hasKey
+                ? `已连接 ${provider?.name ?? "自定义接口"} · ${form.model}`
+                : "先填写接口地址和 Key，研迹才能抽知识点、整理课题并回答提问。"}
           </p>
         </div>
       </header>

@@ -81,6 +81,71 @@ export type KnowledgeMention = {
   createdAt: string;
 };
 
+export type TopicConcept = {
+  name: string;
+  principle: string;
+};
+
+export type TopicMethod = {
+  name: string;
+  summary: string;
+};
+
+export type TopicReading = {
+  title: string;
+  why: string;
+  keywords: string[];
+};
+
+export type TopicOverview = {
+  background: string;
+  concepts: TopicConcept[];
+  methods: TopicMethod[];
+  stateOfArt: string;
+  openProblems: string[];
+  reading: TopicReading[];
+  keywords: string[];
+  usedArticleIds: string[];
+  generatedAt: string;
+};
+
+export type Topic = {
+  id: string;
+  title: string;
+  overview: TopicOverview | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TopicMessage = {
+  id: string;
+  topicId: string;
+  role: MessageRole;
+  content: string;
+  createdAt: string;
+};
+
+export type TopicArticleRef = {
+  id: string;
+  title: string;
+  summary: string;
+};
+
+export type TopicDetail = {
+  topic: Topic;
+  messages: TopicMessage[];
+  articles: TopicArticleRef[];
+};
+
+export type TopicListItem = {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  hasOverview: boolean;
+  messageCount: number;
+};
+
 export type Database = {
   settings: Settings;
   articles: Article[];
@@ -88,6 +153,8 @@ export type Database = {
   conversations: Conversation[];
   messages: ChatMessage[];
   mentions: KnowledgeMention[];
+  topics: Topic[];
+  topicMessages: TopicMessage[];
 };
 
 export type ArticleDetail = {

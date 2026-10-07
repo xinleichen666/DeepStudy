@@ -1,5 +1,7 @@
+import { applyEnvApiKey } from "@/lib/api-key";
 import { ingestPdfBuffer, ingestUrl } from "@/lib/ingest";
 import { extractKnowledge } from "@/lib/llm";
+import { resolveSettings } from "@/lib/providers";
 import {
   createArticle,
   getArticleDetail,
@@ -61,7 +63,7 @@ export async function saveImportedPdf(file: File): Promise<Article> {
 export async function extractIfPossible(articleId: string) {
   const detail = await getArticleDetail(articleId);
   if (!detail) return;
-  const settings = await getSettings();
+  const settings = applyEnvApiKey(resolveSettings(await getSettings()));
   if (!settings.apiKey.trim()) return;
   const extracted = await extractKnowledge(settings, detail.article);
   await updateArticleMeta(articleId, {
