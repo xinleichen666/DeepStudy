@@ -15,7 +15,7 @@ const serif = Noto_Serif_SC({
 
 export const metadata: Metadata = {
   title: "研迹 DeepStudy",
-  description: "研究生自学：读文献、问基础知识点，并把问答写回原文。",
+  description: "研究生自学：读文献、整理课题知识，并把问答写回原文。",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

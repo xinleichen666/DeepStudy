@@ -6,6 +6,10 @@ import type {
   KnowledgePoint,
   KnowledgeTraceItem,
   Settings,
+  Topic,
+  TopicDetail,
+  TopicListItem,
+  TopicMessage,
 } from "./types";
 
 export type ArticleCard = LibraryCard;
@@ -75,6 +79,113 @@ export async function saveSettings(input: Partial<Settings> & { test?: boolean }
 
 export async function fetchKnowledge() {
   return readJson<{ items: KnowledgeTraceItem[] }>(await fetch("/api/knowledge"));
+}
+
+async function postJson<T>(url: string, body: unknown, timeoutMs: number) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await readJson<T>(
+      await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      }),
+    );
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("模型响应超时，请再试一次");
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+export async function fetchTopics() {
+  return readJson<{ topics: TopicListItem[] }>(await fetch("/api/topics", { cache: "no-store" }));
+}
+
+export async function fetchTopic(id: string) {
+  return readJson<TopicDetail>(await fetch(`/api/topics/${id}`, { cache: "no-store" }));
+}
+
+export async function createTopicRequest(title: string) {
+  return postJson<{ topic: Topic; error?: string }>("/api/topics", { title }, 180_000);
+}
+
+export async function regenerateTopicRequest(id: string) {
+  return postJson<{ topic: Topic }>(`/api/topics/${id}/overview`, {}, 180_000);
+}
+
+export async function deleteTopicRequest(id: string) {
+  await readJson<{ ok: boolean }>(await fetch(`/api/topics/${id}`, { method: "DELETE" }));
+}
+
+export async function streamTopicChat(input: {
+  topicId: string;
+  message: string;
+  onToken: (token: string) => void;
+}) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 120_000);
+  try {
+    const response = await fetch(`/api/topics/${input.topicId}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: input.message }),
+      signal: controller.signal,
+    });
+    if (!response.ok || !response.body) {
+      const payload = (await response.json().catch(() => ({ error: "提问失败" }))) as { error?: string };
+      throw new Error(payload.error || "提问失败");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let assistant = "";
+    let saved: TopicMessage | null = null;
+
+    const consume = (block: string) => {
+      const event = block.match(/^event: (.+)$/m)?.[1]?.trim();
+      const dataLine = block.match(/^data: ([\s\S]+)$/m)?.[1];
+      if (!event || !dataLine) return;
+      const data = JSON.parse(dataLine) as {
+        token?: string;
+        error?: string;
+        assistant?: TopicMessage;
+      };
+      if (event === "token" && data.token) {
+        assistant += data.token;
+        input.onToken(data.token);
+      }
+      if (event === "error" && data.error) throw new Error(data.error);
+      if (event === "done" && data.assistant) {
+        assistant = data.assistant.content || assistant;
+        saved = data.assistant;
+      }
+    };
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split("\n\n");
+      buffer = parts.pop() ?? "";
+      for (const part of parts) consume(part);
+    }
+    if (buffer.trim()) consume(buffer);
+    return { content: assistant, assistant: saved };
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("模型响应超时，请再试一次");
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
 }
 
 export async function classifySelectionAsk(input: {

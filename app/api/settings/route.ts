@@ -1,5 +1,6 @@
+import { apiKeyStatus } from "@/lib/api-key";
 import { jsonError, jsonOk, readBody } from "@/lib/http";
-import { getProvider } from "@/lib/providers";
+import { getProvider, resolveSettings } from "@/lib/providers";
 import { getSettings, publicSettings, saveSettings } from "@/lib/store";
 import { testConnection } from "@/lib/llm";
 import type { Settings } from "@/lib/types";
@@ -10,9 +11,11 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const settings = await getSettings();
+    const status = apiKeyStatus(resolveSettings(settings));
     return jsonOk({
       settings: publicSettings(settings),
-      hasKey: Boolean(settings.apiKey),
+      hasKey: status.hasKey,
+      keySource: status.keySource,
     });
   } catch (error) {
     return jsonError(error);
@@ -34,12 +37,13 @@ export async function POST(request: Request) {
           : current.apiKey,
     });
 
+    const status = apiKeyStatus(resolveSettings(next));
     if (body.test) {
       const reply = await testConnection(next);
-      return jsonOk({ settings: publicSettings(next), hasKey: Boolean(next.apiKey), test: reply });
+      return jsonOk({ settings: publicSettings(next), hasKey: status.hasKey, keySource: status.keySource, test: reply });
     }
 
-    return jsonOk({ settings: publicSettings(next), hasKey: Boolean(next.apiKey) });
+    return jsonOk({ settings: publicSettings(next), hasKey: status.hasKey, keySource: status.keySource });
   } catch (error) {
     return jsonError(error);
   }

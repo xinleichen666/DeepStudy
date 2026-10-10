@@ -2,6 +2,8 @@ import { AppShell } from "@/components/AppShell";
 import { ApiSettingsForm } from "@/components/ApiSettingsForm";
 import { ImportPanel } from "@/components/ImportPanel";
 import { LibraryList } from "@/components/LibraryList";
+import { apiKeyStatus } from "@/lib/api-key";
+import { resolveSettings } from "@/lib/providers";
 import { getSettings, publicSettings } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +21,7 @@ export default async function HomePage({
 }) {
   const query = await searchParams;
   const settings = await getSettings();
+  const key = apiKeyStatus(resolveSettings(settings));
   return (
     <AppShell active="library">
       <div className="page-pad">
@@ -26,13 +29,13 @@ export default async function HomePage({
           <p className="kicker">研究生自学 · 个人知识可追溯</p>
           <h1>把一篇文献读成可以反复回来的问题。</h1>
           <p className="lede">
-            导入链接或 PDF，研迹会抽出基础知识点并向你提问；你问过的概念会写回原文。下次打开，点击标注即可接上当时的对话。
+            导入链接或 PDF，研迹会抽出基础知识点并向你提问；你问过的概念会写回原文。下次打开，点击标注即可接上当时的对话。也可以先到「课题知识」，把研究方向整理成可追问的概览。
           </p>
         </header>
         <ApiSettingsForm
           compact
           back="/"
-          initial={{ settings: publicSettings(settings), hasKey: Boolean(settings.apiKey) }}
+          initial={{ settings: publicSettings(settings), hasKey: key.hasKey, keySource: key.keySource }}
           message={savedMessage(query.saved)}
           error={query.settingsError}
         />

@@ -46,10 +46,13 @@
 6. **知识谱**  
    只收录真正问过的概念：来自哪篇文章、问了什么、还关联了哪些知识点，并可跳回原文标注。
 
-7. **模型接口（需自备 Key）**  
+7. **课题知识**  
+   在侧栏「课题知识」写下研究方向（例如「薄膜铌酸锂偏振分束旋转器逆向设计」）。研迹用你配置的模型生成背景、核心概念、关键方法、研究现状、开放问题和阅读关键词，并可以带着课题和上文继续追问。文库里标题、摘要、知识点或正文对得上的论文会作为上下文，并可跳回原文。课题和对话保存在本机 `data/deepstudy.json`。
+
+8. **模型接口（需自备 Key）**  
    支持 DeepSeek、通义千问、智谱 GLM、Kimi、豆包，或任意 OpenAI Chat Completions 兼容网关。使用前请到服务商控制台自行申请 Key，并在应用内填写；**仓库与安装包均不包含可用 Key**。
 
-8. **桌面应用**  
+9. **桌面应用**  
    可打包为 Windows 安装版 / 便携版，数据在本机用户目录。
 
 ---
@@ -66,9 +69,16 @@ npm run dev
 3. 再导入链接或 PDF 开始精读。
 
 推荐默认：**DeepSeek**（需自行注册并创建 Key）  
-- 接口：`https://api.deepseek.com/v1`  
+- 接口：`https://api.deepseek.com/v1`（也兼容 `https://api.deepseek.com`）  
 - 模型：`deepseek-chat`  
 - 申请 Key：[platform.deepseek.com/api_keys](https://platform.deepseek.com/api_keys)
+
+Key 有两种放法，界面里保存的优先：
+
+- 在「API」页填写，写入本机 `data/deepstudy.json`
+- 不把 Key 写进界面时，设置环境变量 `DEEPSEEK_API_KEY`（当前服务是 DeepSeek 或接口在 `api.deepseek.com`），或 `DEEPSTUDY_API_KEY`（任意已选服务，优先于上一行）
+
+不要把 Key 提交到仓库。桌面版会继承启动时的环境变量。
 
 抓取网页需要本机已安装 **Chrome 或 Edge**。
 
