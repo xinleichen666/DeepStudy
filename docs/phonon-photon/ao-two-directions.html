@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>声光耦合的两个可执行方向</title>
+<style>
+  @font-face {
+    font-family: "Hei";
+    src: url("file:///usr/share/fonts/truetype/wqy/wqy-microhei.ttc");
+    font-weight: 400;
+  }
+  @font-face {
+    font-family: "Hei";
+    src: url("file:///usr/share/fonts/truetype/wqy/wqy-microhei.ttc");
+    font-weight: 700;
+  }
+  @page {
+    size: A4;
+    margin: 14mm 14mm 16mm 14mm;
+    @bottom-left {
+      content: "声光耦合选题  ·  仿真 + 台面，无自有流片";
+      font-family: "Hei", sans-serif;
+      font-size: 8pt;
+      color: #6b6560;
+    }
+    @bottom-right {
+      content: counter(page) " / " counter(pages);
+      font-family: "Hei", sans-serif;
+      font-size: 8pt;
+      color: #6b6560;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: "Hei", sans-serif;
+    font-size: 10pt;
+    line-height: 1.55;
+    color: #1c1917;
+  }
+  h1 {
+    font-size: 18pt;
+    line-height: 1.3;
+    font-weight: 700;
+    margin: 0 0 4pt 0;
+    letter-spacing: 0.01em;
+  }
+  .sub {
+    margin: 0;
+    color: #3f3a36;
+    font-size: 10pt;
+  }
+  .meta {
+    margin: 6pt 0 0 0;
+    color: #6b6560;
+    font-size: 8.5pt;
+  }
+  h2 {
+    font-size: 12.5pt;
+    line-height: 1.35;
+    margin: 14pt 0 6pt 0;
+    padding-bottom: 2pt;
+    border-bottom: 1.4pt solid #1e3a4c;
+    color: #1e3a4c;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 11pt;
+    line-height: 1.35;
+    margin: 10pt 0 3pt 0;
+    color: #1e3a4c;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  p { margin: 0 0 6pt 0; }
+  ul, ol { margin: 2pt 0 8pt 0; padding-left: 1.15em; }
+  li { margin: 0 0 3pt 0; }
+  strong { font-weight: 700; }
+  code, .mono { font-family: "Hei", sans-serif; }
+  .nowrap { white-space: nowrap; }
+  a { color: #1e3a4c; text-decoration: none; }
+
+  .rule {
+    height: 3pt;
+    background: #1e3a4c;
+    margin: 0 0 8pt 0;
+  }
+  .lead {
+    background: #f3f6f8;
+    border-left: 3pt solid #1e3a4c;
+    padding: 7pt 9pt 2pt 10pt;
+    margin: 8pt 0 8pt 0;
+  }
+  .lead p:last-child { margin-bottom: 5pt; }
+
+  .cards {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 8pt 0;
+    margin: 0 0 8pt 0;
+  }
+  .cards td {
+    width: 50%;
+    vertical-align: top;
+    background: #f7f5f2;
+    border-top: 3.5pt solid #1e3a4c;
+    padding: 7pt 8pt 6pt 8pt;
+  }
+  .cards td.b {
+    border-top-color: #8f3d2b;
+  }
+  .kicker {
+    font-size: 8pt;
+    letter-spacing: 0.06em;
+    color: #8f3d2b;
+    margin: 0 0 2pt 0;
+  }
+  .cards h3 {
+    margin: 0 0 4pt 0;
+    font-size: 11pt;
+    color: #1c1917;
+  }
+  .cards p { margin: 0 0 4pt 0; font-size: 9.2pt; line-height: 1.48; }
+  .tag {
+    display: inline-block;
+    font-size: 8pt;
+    color: #1e3a4c;
+    border: 0.6pt solid #1e3a4c;
+    padding: 0 4pt;
+    margin-right: 3pt;
+  }
+
+  table.data {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 4pt 0 8pt 0;
+    font-size: 8.4pt;
+    line-height: 1.4;
+  }
+  table.data th {
+    background: #1e3a4c;
+    color: white;
+    font-weight: 400;
+    text-align: left;
+    padding: 3.5pt 4.5pt;
+    vertical-align: top;
+  }
+  table.data td {
+    border-bottom: 0.4pt solid #d9d3cb;
+    padding: 3.2pt 4.5pt;
+    vertical-align: top;
+  }
+  table.data tr { break-inside: avoid; page-break-inside: avoid; }
+  table.data tr:nth-child(even) td { background: #f7f5f2; }
+
+  .note {
+    font-size: 8.5pt;
+    color: #3f3a36;
+    margin: -2pt 0 8pt 0;
+  }
+  .box {
+    border: 0.7pt solid #d9d3cb;
+    padding: 6pt 8pt 2pt 8pt;
+    margin: 4pt 0 8pt 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .box h3 { margin-top: 0; }
+  ol.tight li { margin-bottom: 2pt; }
+  .ref { font-size: 8.3pt; line-height: 1.45; }
+  .ref p { margin: 0 0 2pt 0; }
+</style>
+</head>
+<body>
+
+<div class="rule"></div>
+<h1>声光耦合的两个可执行方向</h1>
+<p class="sub">按 2026-10-12 文献简报判定。平台是薄膜铌酸锂；这一阶段做仿真和台面，不做自有流片。</p>
+<p class="meta">判定日期 2026-10-12。器件数字只取简报里已核对的公开文献。热声子占据由声频和温度算出，表内标明，不写成实测噪声。</p>
+
+<div class="lead">
+  <p><strong>结论。</strong>做两个方向，先做方向一，方向二接在同一套参数和同一套台面光路后面。方向一交出移频保真度的噪声分区；方向二交出同一路声驱动上的可编程声相位，以及加热对移频和相位的联合传递。两篇都投 Optics Express、Applied Physics Letters 或同等的仿真加台面刊物。没有流片数据的器件文，不投 Nature 子刊。</p>
+  <p>频移和延迟放在同一条声子线上，分成两篇文章写。并成「片上同时集成」会直接碰到没有流片这个约束。</p>
+</div>
+
+<table class="cards">
+  <tr>
+    <td>
+      <p class="kicker">方向一 · 先做</p>
+      <h3>移频噪声账本，台面做移频 HOM</h3>
+      <p>把已发表的三类声光器件拆开，算残留载波、自发布里渊和热声子各自把频率仓干涉可见度限制在哪里。</p>
+      <p><span class="tag">台面</span>商用光纤 AOM + SPDC + HOM</p>
+      <p><span class="tag">参数</span>Shao 2019 / 2020，Zhu，Xu 的公开标定</p>
+    </td>
+    <td class="b">
+      <p class="kicker">方向二 · 第一关通过再展开</p>
+      <h3>同一路声驱动上的移频与声相位</h3>
+      <p>在组内已有的声学马赫–曾德尔模型上加光弹重叠，给出移频强度和声相位对叉指功率、热调功率的联合误差。</p>
+      <p><span class="tag">起点</span>组内声学 MZI + 热调 COMSOL</p>
+      <p><span class="tag">台面</span>AOM 与光纤相位两个独立旋钮</p>
+    </td>
+  </tr>
+</table>
+
+<h2>1　选择依据</h2>
+<p>简报给出的工作条件是：薄膜铌酸锂（可对照铌酸锂-on-蓝宝石和氮化镓-on-蓝宝石）；仿真用 COMSOL、耦合模和 Monte-Carlo；台面用商用声光调制器、光纤、商用薄膜铌酸锂调制器、SPDC、HOM 和光谱仪；组内已有声学马赫–曾德尔加热调的 COMSOL。激光直写不承担声光主线。</p>
+<p>下面四个题目不立为方向。</p>
+<table class="data">
+  <thead>
+    <tr><th style="width:28%">题目</th><th>依据</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>片上微瓦级声学光子分子频移器，并把转换效率做到接近电光</td>
+      <td>Zhu 等，arXiv:2511.22585，已经在铌酸锂-on-蓝宝石上做了声驱动光子分子实验。效率要对标 Hu 等，Nature 2021（28.2 GHz 频移，文中效率约 98.7%，常见引用功率约 96 mW；带宽在数 GHz 量级）。简报写明：阻抗匹配之后，声学在功率上的优势可能消失。这条线还要求自有或合作流片。</td>
+    </tr>
+    <tr>
+      <td>片上布里渊量子存储</td>
+      <td>简报记载掺铒薄膜铌酸锂原子频率梳已存电信单光子级脉冲，存储时间 &gt;1 µs，最多 20 个时间模，接收带宽最高 2.2 GHz。超过这一指标的片上布里渊量子存储，简报列为需要流片或强合作。光纤受激布里渊只保留为方向二的经典延迟类比。</td>
+    </tr>
+    <tr>
+      <td>以「声光频移比电光更省功率」做主结论</td>
+      <td>Shao 等，Opt. Express 2020：片上频移效率 3.5%（30 dBm）。Hu 等的约 99% 是电光双环的转换效率。Qiu 等，Opt. Lett. 2025，摘要报道 serrodyne 电光频移效率 &gt;98.8%（摘要未核全文）。两个百分比不是同一个量。只比效率时，电光是天花板。</td>
+    </tr>
+    <tr>
+      <td>只复现氮化镓声子电路，或者做声光束偏转雷达</td>
+      <td>Xu 等，arXiv:2510.26596，平台是氮化镓-on-蓝宝石，文中没有声光接口；它的热声相移 4.03 rad/W（100 µm）只做方向二的锚点。Yu 等，Nat. Commun. 2026，共振增强声光束偏转效率最高 26%、视场 18°，是自由空间雷达，不进入频移–声相位这条线。</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>2　方向一：移频噪声账本与移频 HOM</h2>
+<h3>2.1　摘要里允许出现的句子</h3>
+<p>用公开标定的声光参数，把三类器件的移频噪声拆开，给出室温下频率仓 HOM 可见度的上限；光纤声光调制器这一支，用 SPDC 移频 HOM 测到。</p>
+
+<h3>2.2　三类器件分三本账</h3>
+<p>三类器件的头条数字不能放进同一张「效率」柱里比较。方向一的实验只对第一类。</p>
+
+<div class="box">
+  <h3>甲　行波布拉格声光频移器 — 台面的对标对象</h3>
+  <p>Shao 等，Opt. Express 28, 23728 (2020)。薄膜铌酸锂上叉指换能器激发瑞利波，斯托克斯与反斯托克斯从空间端口分开。频移约 2.9–3 GHz；载波抑制 &gt;30 dB（斯托克斯 31 dB，反斯托克斯 33 dB）；杂散边带抑制 &gt;40 dB；片上频移效率 3.5%（30 dBm）；单叉指的微波到声效率约 31%；射频 3 dB 带宽约 70 MHz；光纤到光纤插入损耗约 −15 dB。</p>
+  <p>这是相干驱动的经典光栅。商用光纤 AOM 与它同类：强射频驱动，边带在频率上分开。方向一的 HOM 数据点只画在这一类上。</p>
+</div>
+
+<div class="box">
+  <h3>乙　共振声光微波–光转换 — 只做标定，不承担频率仓主结果</h3>
+  <p>Shao 等，Optica 6, 1498 (2019)。悬空 X 切薄膜铌酸锂。马赫–曾德尔：作用区 100 µm，声模约 3.33 GHz，声学 Q 约 3600，单臂 <span class="nowrap">V<sub>π</sub> = 4.6 V</span>，<span class="nowrap">V<sub>π</sub>L ≈ 0.045 V·cm</span>，转换带宽约 1 MHz。跑道环：光学 Q &gt; 2×10<sup>6</sup>，有效 <span class="nowrap">V<sub>π</sub> = 0.77 V</span>，<span class="nowrap">g<sub>0</sub> ~ 1.1 kHz</span>（声模约 2.17 GHz），1 mW 光功率下光子数转换效率 0.0017%，单光子协同率 C<sub>0</sub> ≈ 4×10<sup>−8</sup>。叉指到声模耦合效率最高约 50%。</p>
+  <p>这些数字用来锁定 g<sub>0</sub>、V<sub>π</sub> 和 Q。光子数转换效率停在 0.0017% 这一公开结果上，本文不把该器件写成单光子频率仓频移器。</p>
+</div>
+
+<div class="box">
+  <h3>丙　后向布里渊强耦合 — 算自发散射上限，并标明换算是假设</h3>
+  <p>Zhu 等，arXiv:2511.22585。铌酸锂-on-蓝宝石耦合双微环，声频 Ω/2π ~ 8.54 GHz，<span class="nowrap">β/√P<sub>a</sub> = 2π×1.33 GHz/√mW</span>，<span class="nowrap">C/P<sub>a</sub> = 2.46 mW<sup>−1</sup></span>（P<sub>a</sub> = 2.5 mW 时 C = 6.2）。声功率约 0.6 mW 时可见强耦合劈裂。动态布拉格镜反射率 24%（P<sub>a</sub> = 6.3 mW）。超模线宽 κ/2π ≈ 0.93 GHz 与 0.69 GHz。文中功率是声功率。文中没有单端口频移效率。</p>
+  <p>Xu 等，arXiv:2509.01940。同类材料上的环内后向布里渊：G<sup>2</sup> = α P<sub>a</sub>，<span class="nowrap">α = 1774±171 GHz<sup>2</sup>/W</span>（8.533 GHz），射频到声约 10%，κ<sub>0</sub>/2π ≈ 0.32 GHz，5.7 dBm 声功率下隔离 45 dB。</p>
+  <p>方向一用 α、C 和 κ 估计自发布里渊进入信号模的上限。从「动态布拉格镜反射率」换算到「单边带移频保真度」在图注里写成模型假设。Zhu 的实验本身没有给出这个保真度。</p>
+</div>
+
+<h3>2.3　热声子占据是算出来的</h3>
+<p>公式 n<sub>th</sub> = 1 / (exp(hf / k<sub>B</sub>T) − 1)。下表把文献声频代进去，用来说明这些 GHz 声模在室温和 4 K 都处于 n<sub>th</sub> ≫ 1。这不是文献里的噪声谱。</p>
+<table class="data">
+  <thead>
+    <tr>
+      <th>声频</th><th>出处</th><th>n<sub>th</sub>（300 K）</th><th>n<sub>th</sub>（4 K）</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>2.17 GHz</td><td>Shao 2019，跑道环</td><td>2.88×10<sup>3</sup></td><td>38</td></tr>
+    <tr><td>3.33 GHz</td><td>Shao 2019，马赫–曾德尔</td><td>1.88×10<sup>3</sup></td><td>25</td></tr>
+    <tr><td>3.0 GHz</td><td>Shao 2020，行波频移</td><td>2.08×10<sup>3</sup></td><td>27</td></tr>
+    <tr><td>8.54 GHz</td><td>Zhu；Xu 为 8.533 GHz</td><td>7.32×10<sup>2</sup></td><td>9.3</td></tr>
+  </tbody>
+</table>
+<p class="note">10 mK 时，3 GHz 的 hf/k<sub>B</sub>T ≈ 14，n<sub>th</sub> 降到远小于 1。Weaver 等，Nat. Nanotechnol. 2024（效率约 0.9%，带宽 14.8 MHz）和 Jiang 等，arXiv:2210.10739（连续转换效率约 5%，热噪声 &lt;2 个微波光子）走的是低温换能。方向一的台面在室温。4 K 一列放进表里，是为了标明：把 Shao 2019 的器件放进液氦，n<sub>th</sub> 仍是数十，量子换能并不自动成立。</p>
+<p>账本因此分成三件事，分开算。</p>
+<ul>
+  <li><strong>甲类，相干驱动光栅。</strong>移频场可以是经典相干态。热声子进入自发散射本底和相位抖动。可见度对残余载波的那一支，用光纤 AOM 直接测。</li>
+  <li><strong>乙类，共振换能。</strong>公开数字是 n<sub>th</sub> ~ 10<sup>3</sup>（室温、3 GHz）和 C<sub>0</sub> ~ 10<sup>−8</sup>。这一类提供 V<sub>π</sub> 与 g<sub>0</sub> 的标定，不提供频率仓保真度的主曲线。</li>
+  <li><strong>丙类，布里渊强耦合。</strong>经典协同率在毫瓦声功率已经大于 1。要单算的是自发散射进信号频率仓的概率，以及光学线宽已经到 0.3–0.9 GHz 时，频率仓是否还分得开。</li>
+</ul>
+
+<h3>2.4　台面怎么测</h3>
+<p>仪器：商用光纤 AOM、SPDC、HOM、光谱仪。AOM 的驱动频率、射频功率、移频效率、载波抑制和边带抑制全部自己测，不把 Shao 的 3.5% 填进实验栏。</p>
+<p>光路：SPDC 的一路经过 AOM，与另一路做 HOM。扫载波抑制，得到可见度曲线。这条曲线核对账本里「残余载波 → 可见度」。</p>
+<p>图注里写明边界：商用光纤 AOM 的移频由型号决定，常见型号在 10<sup>2</sup> MHz 量级，与 Shao 2020 的约 3 GHz 薄膜声模不是同一个振子。室温热声子占据不由这次 HOM 测出。GHz、n<sub>th</sub> 和片上 g<sub>0</sub> 的曲线是外推，实验点只落在 AOM 那一支。</p>
+<p>插入损耗进计数率。Shao 2020 光纤到光纤约 −15 dB 用来估计片上符合计数会下降多少，不写进可见度上限。</p>
+
+<h3>2.5　三张图</h3>
+<ol>
+  <li>三类器件并排。每类下面只放一个头条数字：3.5%（30 dBm）；0.0017%（1 mW 光功率）；C/P<sub>a</sub> = 2.46 mW<sup>−1</sup>。</li>
+  <li>噪声项随驱动功率的变化：残余载波、自发散射、热声子相位抖动。每条曲线标注它锁定的公开参数，假设写在图注。</li>
+  <li>HOM 可见度对载波抑制。理论曲线上只叠加 AOM 的实验点。</li>
+</ol>
+
+<h3>2.6　审稿人那一句，以及必须写上的差分</h3>
+<p>问：Hu 的电光频移效率约 99%，Qiu 的 serrodyne 摘要效率 &gt;98.8%，为什么还做声光移频。</p>
+<p>答：电光移频没有这条 GHz 声子通道上的自发散射和热声子本底。本文计算的是声光移频的保真度上限。只比较转换效率时，电光仍是天花板，本文不给出功率胜负。</p>
+<p>文中引用 Zhu 等，arXiv:2511.22585，并写明几何差别：本文做噪声账本和单路移频可见度，不提出新的双环光子分子。Shao 的 3.5% 与 Hu 的约 99% 分列。若正文出现功率比较，先写阻抗匹配，并接受匹配之后声学功率优势可以不存在。</p>
+
+<h2>3　方向二：同一路声驱动上的移频与声相位</h2>
+<h3>3.1　摘要里允许出现的句子</h3>
+<p>在已有声学马赫–曾德尔模型上加入光弹重叠，用 Xu 的热声相移和 Shao 的 V<sub>π</sub>L 做锚，给出同一路声驱动下移频强度与声相位的联合误差传递；误差公式用商用 AOM 加光纤相位的台面核对。</p>
+
+<h3>3.2　第一道关：先对上热声相移的量级</h3>
+<p>现有 COMSOL 先在它本来的材料和几何上，算出能与 Xu 等，arXiv:2510.26596，的 4.03 rad/W（100 µm 长相移器）放在同一量级的热声相移。这一步对不上，方向二停在模型标定：不加光波导，不写器件指标。</p>
+<p>对上之后，再换薄膜铌酸锂或铌酸锂-on-蓝宝石的弹性、压电和光弹常数。每一项材料常数单独列表，给出出处。换材料之后的相移和频移强度标成「计算」。旁边放两条实测参考，供读者看计算点落在哪里：</p>
+<ul>
+  <li>Shao 等，Optica 2019：悬空马赫–曾德尔，V<sub>π</sub>L ≈ 0.045 V·cm。</li>
+  <li>简报中的非悬空对照：V<sub>π</sub>L ≈ 1.004 V·cm，0.842 GHz，射频 3 dB 带宽 132.5 MHz（Ni / Bhave / Xu，arXiv:2606.05337）。简报标明该条来自既有核对表，本次未重读全文。正文沿用这个标注。</li>
+</ul>
+<p>文章不声称计算值超过这两条实测。</p>
+
+<h3>3.3　模型里有什么</h3>
+<p>一条声学生总线，一个热声相位臂（组内马赫–曾德尔已有的部分），一段与单根光波导重叠的声光作用区。光波导只取一根，做行波相位调制或频移的重叠积分。结构里不画耦合双环，以免和 Zhu 的光子分子落在同一几何上。</p>
+<p>输出两个计算量，都是叉指功率和热调功率的函数。</p>
+<ul>
+  <li>声相位 φ（弧度），以及由该模声速和声程得到的群延迟。声速取 COMSOL 的模速度，正文写明晶向和模族。</li>
+  <li>声光耦合强度，写成可以和 Shao 的 V<sub>π</sub> 或 g<sub>0</sub> 并列表的形式。</li>
+</ul>
+<p>两个旋钮都会加热。加热改变声速，也改变光程或相位匹配。传递函数的输出是移频保真度（含载波抑制的退化）和干涉相位误差。本文里的「传感」就是这个干涉相位还能分辨多小的变化。简报里的铌酸锂微环压力、光声气体传感卡片没有核对到唯一全文，不写进模型。</p>
+<p>群延迟的含义是可编程声相位对应的延迟，数值由模速度决定。掺铒薄膜铌酸锂原子频率梳的 &gt;1 µs 和最多 20 个时间模是稀土离子存储，正文把两条通道分节描述，不把声延迟写成量子存储指标。</p>
+
+<h3>3.4　台面怎么测</h3>
+<p>商用 AOM 提供移频。光纤延迟线或热调光纤马赫–曾德尔提供独立的相位旋钮。两个旋钮分开扫，记录干涉读出。实验核对的是误差公式：移频支路的残余载波和相位支路的漂移怎样同时进入可见度或条纹位移。</p>
+<p>这次台面不核对铌酸锂里的光弹重叠积分。重叠积分只在仿真一节。正文不出现「片上已经同时集成频移与声延迟」。</p>
+
+<h3>3.5　三张图</h3>
+<ol>
+  <li>结构图：声学马赫–曾德尔、热调臂、一根光波导、重叠区、端口。</li>
+  <li>声相位和声光强度对两个功率旋钮的计算曲线。4.03 rad/W 标成氮化镓锚点。Shao 的 V<sub>π</sub>L 标成实测参考线。</li>
+  <li>台面：AOM 驱动和热相位两个旋钮下的干涉读出，与传递函数的预测画在一起。</li>
+</ol>
+
+<h3>3.6　审稿人那一句</h3>
+<p>问：移频交给电光，声子只做存储，为什么绑在同一个驱动上。</p>
+<p>答：这篇的声子通道同时给出光频移和可编程声相位。电光频移器没有这路机械相位。文章的结果是这两项的联合误差。</p>
+
+<h3>3.7　和方向一怎么接</h3>
+<p>方向一给出可见度对残余载波和自发散射的上限。方向二给出热调功率把相位匹配和载波抑制推离这个上限的速度。两篇用同一张参数表。方向二的光路在方向一的 AOM 和 HOM 上增加光纤相位臂。</p>
+<p>非互易隔离先不写进主结果。Xu 的 <span class="nowrap">α = 1774±171 GHz<sup>2</sup>/W</span> 和 45 dB 隔离留在参数表里，作为以后「移频之后再隔离」的输入。那一步仍然不把隔离器当成现在要做的器件。</p>
+
+<h2>4　工作顺序</h2>
+<p>顺序由依赖关系决定，不靠流片节点。</p>
+<ol class="tight">
+  <li>先做一张共用参数表。每一行标明「文献实测」或「本文计算」。文献实测旁注篇名；简报标明未重读全文的，表内保留这个注。</li>
+  <li>方向一：写出三类器件的噪声项，锁到第 2 节的公开数字；搭 AOM + SPDC + HOM，先测可见度对载波抑制。</li>
+  <li>方向二的关口：现有声学马赫–曾德尔 COMSOL 对 4.03 rad/W 的量级。对不上就停。</li>
+  <li>关口通过后，换铌酸锂材料常数，加单根光波导的光弹重叠，输出联合传递函数。</li>
+  <li>在方向一的光路上加光纤相位臂，核对传递函数。</li>
+  <li>两篇各自成文。代工流片放到两篇的参数表和误差公式都写完之后再考虑。</li>
+</ol>
+
+<h2>5　共用参数表</h2>
+<p class="note">「状态」一列按简报的核对程度填写。计算行的输入是表中的声频，不是新的器件测量。</p>
+<table class="data">
+  <thead>
+    <tr>
+      <th style="width:22%">量</th>
+      <th>数值</th>
+      <th style="width:28%">出处</th>
+      <th style="width:16%">状态</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>行波片上频移效率</td><td>3.5%（30 dBm）</td><td>Shao, Opt. Express 2020</td><td>全文已核</td></tr>
+    <tr><td>载波抑制 / 杂散边带</td><td>&gt;30 dB（31 / 33 dB）；边带 &gt;40 dB</td><td>同上</td><td>全文已核</td></tr>
+    <tr><td>射频带宽；光纤插损</td><td>约 70 MHz；约 −15 dB</td><td>同上</td><td>全文已核</td></tr>
+    <tr><td>单叉指微波→声</td><td>约 31%（由 S<sub>21</sub> ≈ −10 dB 推断）</td><td>同上</td><td>全文已核</td></tr>
+    <tr><td>悬空 MZI</td><td>V<sub>π</sub> = 4.6 V；V<sub>π</sub>L ≈ 0.045 V·cm；约 3.33 GHz；Q<sub>a</sub> ≈ 3600；带宽约 1 MHz</td><td>Shao, Optica 2019</td><td>全文已核</td></tr>
+    <tr><td>跑道环单光子耦合</td><td>g<sub>0</sub> ~ 1.1 kHz；η = 0.0017%（1 mW）；C<sub>0</sub> ≈ 4×10<sup>−8</sup>；Q<sub>opt</sub> &gt; 2×10<sup>6</sup></td><td>同上</td><td>全文已核</td></tr>
+    <tr><td>布里渊光子分子</td><td>8.54 GHz；C/P<sub>a</sub> = 2.46 mW<sup>−1</sup>；反射率 24%（6.3 mW 声功率）；κ/2π ≈ 0.93 / 0.69 GHz</td><td>Zhu, arXiv:2511.22585</td><td>全文已核</td></tr>
+    <tr><td>环内布里渊</td><td><span class="nowrap">α = 1774±171 GHz<sup>2</sup>/W</span>（8.533 GHz）；隔离 45 dB（5.7 dBm 声功率）；κ<sub>0</sub>/2π ≈ 0.32 GHz</td><td>Xu, arXiv:2509.01940</td><td>简报称既有全文核对表</td></tr>
+    <tr><td>热声相移</td><td>4.03 rad/W（100 µm）</td><td>Xu, arXiv:2510.26596，氮化镓</td><td>全文已核</td></tr>
+    <tr><td>电光双环频移</td><td>最高 28.2 GHz；η ≈ 98.7%；插入损耗约 0.45–1.2 dB；带宽数 GHz 量级</td><td>Hu, Nature 2021</td><td>全文 / 补充已核。电光对照，不是声光结果</td></tr>
+    <tr><td>非悬空声光</td><td>V<sub>π</sub>L ≈ 1.004 V·cm；0.842 GHz；带宽 132.5 MHz</td><td>arXiv:2606.05337</td><td>简报：既有核对表，未重读全文</td></tr>
+    <tr><td>serrodyne 电光频移</td><td>效率 &gt;98.8%；载波抑制 42 dB；边带抑制 31 dB</td><td>Qiu, Opt. Lett. 2025</td><td>摘要，未核全文</td></tr>
+    <tr><td>掺铒片上存储</td><td>&gt;1 µs；≤20 个时间模；接收带宽最高 2.2 GHz</td><td>简报综述条目；另有 arXiv:2605.13545</td><td>综述记载。另一条物理通道</td></tr>
+    <tr><td>热声子占据</td><td>见第 2.3 节</td><td>由上表声频与 T 计算</td><td>本文计算，非实测</td></tr>
+  </tbody>
+</table>
+
+<h2>6　对简报十条清单的回答</h2>
+<table class="data">
+  <thead>
+    <tr>
+      <th style="width:28%">清单</th>
+      <th>方向一</th>
+      <th>方向二</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1. 主结果是否必须自有悬空叉指 + 高 Q 环流片？</td>
+      <td>否。主结果是噪声账本和 AOM 上的 HOM。</td>
+      <td>否。主结果是传递函数和分立器件核对。流片不在这两篇里。</td>
+    </tr>
+    <tr>
+      <td>2. 参数能否追溯到公开标定，并分列实测与假设？</td>
+      <td>是。片上数字来自 Shao、Zhu、Xu。AOM 的功率和消光自己测。</td>
+      <td>是。热声锚在 4.03 rad/W，声光锚在 Shao 的 V<sub>π</sub>L。铌酸锂结果标为计算。</td>
+    </tr>
+    <tr>
+      <td>3. 是否引用 Zhu 并写明差别？</td>
+      <td>是。用其 C 与 κ 做丙类账本。几何上不做双环光子分子。</td>
+      <td>是。结构是声学马赫–曾德尔加一根光波导。</td>
+    </tr>
+    <tr>
+      <td>4. 阻抗匹配后是否仍声称功率优于 Hu 2021？</td>
+      <td>否。本文不比效率。</td>
+      <td>否。本文不比效率。</td>
+    </tr>
+    <tr>
+      <td>5. 主线空白是哪一条？</td>
+      <td>频移噪声 / HOM。</td>
+      <td>移频与声相位的联合预算。氮化镓声子电路迁到铌酸锂是手段。</td>
+    </tr>
+    <tr>
+      <td>6. 「一起做」是否拆开，而不是承诺片上全集成？</td>
+      <td>是。本篇只做到可见度上限。</td>
+      <td>是。台面是 AOM 加光纤相位。重叠积分留在仿真。</td>
+    </tr>
+    <tr>
+      <td>7. 3.5% 与约 99% 是否分开？</td>
+      <td>是。</td>
+      <td>是。</td>
+    </tr>
+    <tr>
+      <td>8. 声学 MZI 能否加上光弹重叠？</td>
+      <td>本方向不依赖这一步。</td>
+      <td>这是第一道关。现有模型先复现热声相移量级，再加光弹。对不上就停。</td>
+    </tr>
+    <tr>
+      <td>9. 为什么移频不用电光、声子不只做存储？</td>
+      <td>要算的是声子通道特有的自发散射和热声子本底。</td>
+      <td>同一路声波同时给出光频移和可编程声相位。</td>
+    </tr>
+    <tr>
+      <td>10. 第一篇是否定为 OE / APL / 预印本，而不是无流片的 Nature 子刊器件文？</td>
+      <td>是。</td>
+      <td>是。</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>7　写的时候放在首页的边界</h2>
+<ul>
+  <li>参数表分成「文献实测」和「本文计算」两栏。</li>
+  <li>引用 Zhu 等 arXiv:2511.22585。正文几何不重复耦合双环光子分子。</li>
+  <li>Shao 2020 的 3.5%（30 dBm，行波声光）与 Hu 2021 的约 99%（电光双环）分列。</li>
+  <li>台面数据与片上外推用两种图例。外推曲线的图注写明输入参数和假设。</li>
+  <li>群延迟按 COMSOL 模速度给出。掺铒原子频率梳的微秒存储另节描述。</li>
+  <li>目标刊物：Optics Express、Applied Physics Letters，或预印本。</li>
+</ul>
+
+<h2>参考文献</h2>
+<div class="ref">
+  <p>L. Shao et al., Optica <strong>6</strong>, 1498 (2019). arXiv:1907.08593.</p>
+  <p>L. Shao et al., Opt. Express <strong>28</strong>, 23728 (2020). arXiv:2005.03794.</p>
+  <p>Z.-X. Zhu et al., arXiv:2511.22585.</p>
+  <p>Y. Hu et al., Nature <strong>599</strong>, 587 (2021). arXiv:2005.09621.</p>
+  <p>X.-B. Xu et al., arXiv:2509.01940.</p>
+  <p>X.-B. Xu et al., arXiv:2510.26596.</p>
+  <p>Y. Yu et al., Nat. Commun. (2026). DOI:10.1038/s41467-026-77864-8.</p>
+  <p>M. J. Weaver et al., Nat. Nanotechnol. <strong>19</strong>, 166 (2024). arXiv:2210.15702.</p>
+  <p>W. Jiang et al., arXiv:2210.10739.</p>
+  <p>arXiv:2606.05337（简报标明：既有核对表，未重读全文）.</p>
+  <p>H. Qiu et al., Opt. Lett. <strong>50</strong>, 1132 (2025)（摘要数字）.</p>
+  <p>掺铒薄膜铌酸锂原子频率梳：按简报综述条目；time-bin 存储另见 arXiv:2605.13545。</p>
+</div>
+
+</body>
+</html>
