@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>用 COMSOL 重做声光双环移频器仿真</title>
+<style>
+  @font-face {
+    font-family: "Hei";
+    src: url("file:///usr/share/fonts/truetype/wqy/wqy-microhei.ttc");
+    font-weight: 400;
+  }
+  @font-face {
+    font-family: "Hei";
+    src: url("file:///usr/share/fonts/truetype/wqy/wqy-microhei.ttc");
+    font-weight: 700;
+  }
+  @page {
+    size: A4;
+    margin: 14mm 13mm 15mm 13mm;
+    @bottom-left {
+      content: "COMSOL 手册  ·  声光双环移频器";
+      font-family: "Hei", sans-serif;
+      font-size: 8pt;
+      color: #6b6560;
+    }
+    @bottom-right {
+      content: counter(page) " / " counter(pages);
+      font-family: "Hei", sans-serif;
+      font-size: 8pt;
+      color: #6b6560;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hei", sans-serif;
+    font-size: 10pt;
+    line-height: 1.52;
+    color: #1c1917;
+  }
+  h1 { font-size: 17pt; line-height: 1.28; margin: 0 0 4pt 0; }
+  h2 {
+    font-size: 12.5pt;
+    color: #1e3a4c;
+    border-bottom: 1.3pt solid #1e3a4c;
+    margin: 13pt 0 5pt 0;
+    padding-bottom: 1pt;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  h3 { font-size: 11pt; color: #1e3a4c; margin: 8pt 0 3pt 0; break-after: avoid; page-break-after: avoid; }
+  p { margin: 0 0 5pt 0; }
+  ol, ul { margin: 2pt 0 6pt 0; padding-left: 1.2em; }
+  li { margin: 0 0 2pt 0; }
+  .sub { margin: 0; color: #3f3a36; }
+  .meta { margin: 5pt 0 0 0; color: #6b6560; font-size: 8.5pt; }
+  .rule { height: 3pt; background: #1e3a4c; margin: 0 0 8pt 0; }
+  .lead, .warn, .ok {
+    padding: 6pt 8pt 2pt 9pt;
+    margin: 7pt 0 7pt 0;
+  }
+  .lead { background: #f3f6f8; border-left: 3pt solid #1e3a4c; }
+  .warn { background: #faf6f4; border-left: 3pt solid #8f3d2b; }
+  .ok { background: #f4f7f4; border-left: 3pt solid #1f4d3a; }
+  .eq {
+    font-size: 8.3pt;
+    line-height: 1.42;
+    background: #f6f4f1;
+    border: 0.4pt solid #e4dfd8;
+    padding: 4pt 6pt;
+    margin: 3pt 0 6pt 0;
+  }
+  table.data {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 3pt 0 7pt 0;
+    font-size: 8.2pt;
+    line-height: 1.38;
+  }
+  table.data th {
+    background: #1e3a4c;
+    color: white;
+    font-weight: 400;
+    text-align: left;
+    padding: 3pt 4pt;
+    vertical-align: top;
+  }
+  table.data td {
+    border-bottom: 0.4pt solid #d9d3cb;
+    padding: 2.8pt 4pt;
+    vertical-align: top;
+  }
+  table.data tr { break-inside: avoid; page-break-inside: avoid; }
+  table.data tr:nth-child(even) td { background: #f7f5f2; }
+  .note { font-size: 8.4pt; color: #3f3a36; }
+  code { font-family: "Hei", sans-serif; }
+</style>
+</head>
+<body>
+<div class="rule"></div>
+<h1>用 COMSOL 重做声光双环移频器仿真</h1>
+<p class="sub">对照稿：Resonant acousto-optic frequency shifting in a thin-film lithium niobate photonic molecule（2026-10-14）。按 COMSOL 6.2 / 6.3 英文界面书写。中文界面找同名节点。</p>
+<p class="meta">每一步都是手动能做完的操作。论文里的数字是对照目标，不是你必须凑出来的答案。几何只要论文没写，就用组里的工艺截面，并记在最后的表里。</p>
+
+<div class="lead">
+  <p><strong>先看这一段再点 COMSOL。</strong>论文的 98.3%、6.7 µW 和加热器打开后的 96.4%，是耦合模常微分方程加参数抽样的结果，不是三维全波瞬态算出来的。COMSOL 在这里做两件事：第一部分用全局方程把这篇的算法重算一遍；第二到六部分用多物理场替换论文里假定的 ng、缝、声频、每伏频移和加热器温升。做完再代回全局方程。</p>
+  <p>不要跳过第一部分去画一颗三维双环，也不要在三维里跑 1000 次蒙特卡罗。</p>
+</div>
+
+<h2>0　打开软件之前</h2>
+<p>需要这些模块：Wave Optics（光模式）、Structural Mechanics 与 AC/DC 或 MEMS（压电）、Heat Transfer（加热器）、基础模块里的 Global ODEs。缺 Wave Optics 时，光模式先不要用 RF 模块硬算。</p>
+<p>界面固定为英文，单位制 SI。所有参数都写在 Global Definitions → Parameters 1，数值带方括号单位，例如 <span class="eq">fa = 3.33[GHz]</span>。不要混用 3.33 和 3.33e9。</p>
+<table class="data">
+  <thead><tr><th>论文里的数</th><th>在 COMSOL 的哪一步产生</th><th>论文采用的值</th></tr></thead>
+  <tbody>
+    <tr><td>理想移频比、边带、6.7 µW</td><td>第一部分，全局方程</td><td>ηshift = 98.3%；载波 −23.2 dB；q = −1 为 −21.2 dB；6.7 µW</td></tr>
+    <tr><td>ng</td><td>第二部分，波导模式</td><td>假定 2.3</td></tr>
+    <tr><td>2µ</td><td>第三部分，双波导偶模 / 奇模</td><td>3.33 GHz</td></tr>
+    <tr><td>叉指周期、声频</td><td>第四部分，一个声波长的周期单元</td><td>3.33 GHz</td></tr>
+    <tr><td>每伏频移、ξ</td><td>第五部分，应变改折射率后再算模式</td><td>21.3 GHz/V 定为 ξ = 1</td></tr>
+    <tr><td>加热器功率与两环温差</td><td>第六部分，稳态热</td><td>Pπ = 44.4 mW、2 mK / 3 mK 都是假定，不是合格线</td></tr>
+    <tr><td>公差、抽样</td><td>第八部分，仍在全局方程上扫描</td><td>加热器打开、κi×2：中位 96.4%，第 10 百分位 91.7%</td></tr>
+  </tbody>
+</table>
+
+<h2>1　全局方程：重现理想工作点</h2>
+<h3>1.1　新建</h3>
+<ol>
+  <li>File → New → Model Wizard → 0D → Mathematics → ODE and DAE Interfaces → Global ODEs and DAEs → Time Dependent → Done。</li>
+  <li>在 Parameters 1 里逐行输入下面这张表。Ω、µ、γ、κi 都是角频率，所以带 2π 的量写成 2*pi*频率。</li>
+</ol>
+<table class="data">
+  <thead><tr><th>名称</th><th>表达式</th><th>含义</th></tr></thead>
+  <tbody>
+    <tr><td>fa</td><td>3.33[GHz]</td><td>声频</td></tr>
+    <tr><td>Omega</td><td>2*pi*fa</td><td>角频率</td></tr>
+    <tr><td>mu</td><td>Omega/2</td><td>2µ = Ω，超模裂距等于声频</td></tr>
+    <tr><td>gamma</td><td>2*pi*0.6[GHz]</td><td>环 1 到总线的耦合</td></tr>
+    <tr><td>kappai</td><td>2*pi*80.75[MHz]</td><td>内禀损耗</td></tr>
+    <tr><td>Delta</td><td>mu</td><td>激光对准对称超模</td></tr>
+    <tr><td>domega</td><td>2*pi*0.55[GHz]</td><td>理想工作点的推动幅度</td></tr>
+    <tr><td>s</td><td>0</td><td>声光只推环 1。电光对照时改成 −1</td></tr>
+    <tr><td>ain</td><td>1</td><td>输入幅度，比值与它无关</td></tr>
+    <tr><td>G1</td><td>(gamma+kappai)/2</td><td>环 1 的总衰减</td></tr>
+    <tr><td>G2</td><td>kappai/2</td><td>环 2 的衰减</td></tr>
+    <tr><td>sqg</td><td>sqrt(gamma)</td><td>输入输出系数</td></tr>
+    <tr><td>t1</td><td>20[ns]</td><td>只对最后 20 ns 做频谱</td></tr>
+  </tbody>
+</table>
+<p>Definitions → Variables 1 增加一行：</p>
+<div class="eq">Dt = Delta + domega*cos(Omega*t)</div>
+<p>Dt 是环 1 的瞬时失谐。环 2 在 s = 0 时失谐保持为 Delta。</p>
+
+<h3>1.2　四个状态方程</h3>
+<p>光场写成 a1 = x1 + i y1，a2 = x2 + i y2。Global Equations 里每一行的残差是「时间导数减右端」，等于零。初值全部填 0。</p>
+<table class="data">
+  <thead><tr><th>名称</th><th>残差 f = 0</th></tr></thead>
+  <tbody>
+    <tr><td>x1</td><td>x1t − (−G1*x1 + Dt*y1 + mu*y2 − sqg*ain)</td></tr>
+    <tr><td>y1</td><td>y1t − (−G1*y1 − Dt*x1 − mu*x2)</td></tr>
+    <tr><td>x2</td><td>x2t − (−G2*x2 + Delta*y2 + mu*y1)</td></tr>
+    <tr><td>y2</td><td>y2t − (−G2*y2 − Delta*x2 − mu*x1)</td></tr>
+  </tbody>
+</table>
+<p class="note">论文式 (1) 的 −iµ a2 展开后，x1 的右端出现 +mu*y2，y1 的右端出现 −mu*x2。电光推挽以后把 Variables 里的 Dt 换成 Delta + domega*cos(Omega*t)，再给环 2 单独写 Dt2 = Delta − domega*cos(Omega*t)，并把上表 x2、y2 里的 Delta 换成 Dt2。第一部分先保持 s = 0。</p>
+
+<h3>1.3　最后 20 ns 的四个频率分量</h3>
+<p>出口 aout = ain + sqg·a1。再加八个全局方程，把 q = −1、0、+1、+2 的余弦、正弦分量积出来。名称里不能用减号，q = −1 写成 m1。</p>
+<table class="data">
+  <thead><tr><th>名称</th><th>残差</th></tr></thead>
+  <tbody>
+    <tr><td>m1r</td><td>m1rt − (t&gt;t1)*((ain+sqg*x1)*cos(Omega*t) − (sqg*y1)*sin(Omega*t))</td></tr>
+    <tr><td>m1i</td><td>m1it − (t&gt;t1)*((sqg*y1)*cos(Omega*t) + (ain+sqg*x1)*sin(Omega*t))</td></tr>
+    <tr><td>c0r</td><td>c0rt − (t&gt;t1)*(ain+sqg*x1)</td></tr>
+    <tr><td>c0i</td><td>c0it − (t&gt;t1)*(sqg*y1)</td></tr>
+    <tr><td>c1r</td><td>c1rt − (t&gt;t1)*((ain+sqg*x1)*cos(Omega*t) + (sqg*y1)*sin(Omega*t))</td></tr>
+    <tr><td>c1i</td><td>c1it − (t&gt;t1)*((sqg*y1)*cos(Omega*t) − (ain+sqg*x1)*sin(Omega*t))</td></tr>
+    <tr><td>c2r</td><td>c2rt − (t&gt;t1)*((ain+sqg*x1)*cos(2*Omega*t) + (sqg*y1)*sin(2*Omega*t))</td></tr>
+    <tr><td>c2i</td><td>c2it − (t&gt;t1)*((sqg*y1)*cos(2*Omega*t) − (ain+sqg*x1)*sin(2*Omega*t))</td></tr>
+  </tbody>
+</table>
+<p>Variables 里再加入：</p>
+<div class="eq">Pm1 = m1r^2+m1i^2<br>P0 = c0r^2+c0i^2<br>P1 = c1r^2+c1i^2<br>P2 = c2r^2+c2i^2<br>eta = P1/(Pm1+P0+P1+P2)<br>dB0 = 10*log10(P0/P1)<br>dBm1 = 10*log10(Pm1/P1)<br>dB2 = 10*log10(P2/P1)</div>
+
+<h3>1.4　求解设置</h3>
+<ol>
+  <li>Study → Step 1 → Times：<span class="eq">range(0, 3.75[ps], 40[ns])</span>。3.33 GHz 的周期是 300 ps，3.75 ps 等于每周期 80 步，和论文一致。</li>
+  <li>打开 Time-Dependent Solver → Time Stepping。Steps taken by solver 选 Strict。Maximum step 填 3.75[ps]。Relative tolerance 填 1e-6。</li>
+  <li>默认的自由步长会跳过吉赫兹振荡，算出来的移频比没有意义。这一项不要省。</li>
+  <li>Compute。Results 里对 x1 做 1D 时间图：前 2 ns 应有快速振荡并稳住。末时刻用 Derived Values → Global Evaluation 读 eta、dB0、dBm1、dB2。</li>
+</ol>
+<div class="ok">
+  <p><strong>对上了：</strong>eta 在 0.97–0.99；dBm1 约 −21 dB；dB0 约 −23 dB；dB2 约 −24 dB。论文的理想点是 98.3%、−21.2 dB、−23.2 dB、−23.6 dB。差几个百分点，来自时间窗和公差，可以进入下一部分。</p>
+  <p><strong>对不上：</strong>eta 接近 0 或边带全无，先检查 Omega 是否写成了 2*pi*fa，以及时间步是否真的是 Strict。载波远大于信号，检查 Delta 是否等于 mu，以及 x1 方程里是 +mu*y2 不是 −mu*x2。</p>
+</div>
+<p>源功率在这一部分只做验算，不进微分方程。0.55 GHz 除以 21.3 GHz/V 得 26 mV。50 Ω 上峰值电压 V 的功率是 V^2/(2R) = 6.7 µW。这是 ξ = 1、叉指效率按邵 2019 约 50%、Qm 按 2000 的数。</p>
+
+<h2>2　光波导模式：自己的 ng</h2>
+<ol>
+  <li>新模型，2D，Wave Optics → Electromagnetic Waves, Frequency Domain → Mode Analysis。</li>
+  <li>论文没有波导宽度和膜厚。有组里的截面就照画。没有的话，先用一个能算通的脊波导把流程走通：铌酸锂厚度 600 nm，刻蚀 300 nm，顶宽 1.2 µm，下面二氧化硅 2 µm，上面空气或 1 µm 二氧化硅。这组尺寸不是论文给定值，记录表里必须写「教学截面」或「PDK」。</li>
+  <li>材料搜索 Lithium Niobate，用单晶，不要用各向同性近似。新建 Rotated System：晶体 z（光轴）躺在晶片平面内，晶体 x 指向晶片法线。这是 X 切。转完以后检查：面内一个方向的折射率应接近非常光，法线方向接近寻常光。轴反了就改旋转，不要改模式结果去凑 2.3。</li>
+  <li>计算域左右和衬底底边用散射边界或完美匹配层。脊内网格最大单元约 80 nm。</li>
+  <li>Mode Analysis：频率 193.4[THz]，搜索的有效折射率中心 2，模式数 20。取能量集中在脊里、neff 最高的那个导模，记下 neff。</li>
+  <li>同样的网格再算 193.1[THz] 和 193.7[THz]。</li>
+</ol>
+<div class="eq">ng = neff − f · (neff2 − neff1) / (f2 − f1)<br>f 取 193.4 THz，neff 取这一次的结果，下标 1、2 是 193.1 与 193.7 THz。</div>
+<div class="ok"><p><strong>对上了：</strong>ng 落在大约 2.1–2.4。论文写 2.3 是假定。用你的 ng，不要改输入去凑 2.3。以后式 (2) 里的环长频率因子全部用这个 ng。</p></div>
+
+<h2>3　双波导：把裂距调到 3.33 GHz</h2>
+<p>仍用二维截面，画两根与第二部分相同的脊，间隙 g，共用一个计算域。Mode Analysis 会给出偶模和奇模两个 neff。裂距来自耦合段上多走的相位，再除以整圈时间：</p>
+<div class="eq">Δf = (Δneff · Lc / λ) · c / (ng · Lring)<br>Lring = 0.667[mm]，λ = c/193.4[THz]，Δneff = neff偶 − neff奇<br>c / (ng · Lring) 是这颗环的自由光谱区。ng = 2.3 时大约 196 GHz。</div>
+<p>这个 Δf 就是论文里的超模裂距 2µ/(2π)。目标是 3.33 GHz。</p>
+<ol>
+  <li>先固定耦合长度 Lc = 40[µm]，扫 g = 0.3、0.4、0.5、0.6、0.8 µm。</li>
+  <li>每个 g 记录 Δneff 和 Δf。</li>
+  <li>论文的可调耦合器要求最大裂距大约 3.33×√2 = 4.71 GHz，加热到一半时才是 3.33 GHz。选一组 (g, Lc)，使最大 Δf 接近 4.71 GHz。冷态工作点由第六部分的加热相位决定，不在这一步用死间隙凑 3.33。</li>
+  <li>间隙误差以后按论文的衰减长度换算，不需要再跑模式：5 nm 对应大约 3.33 GHz × (5/150) = 111 MHz。论文写的是约 114 MHz，同一量级。</li>
+</ol>
+<div class="ok"><p><strong>对上了：</strong>有一条连续的 Δf(g) 曲线，并且存在一组尺寸使最大裂距在 4–5 GHz。对不上时先查两根波导是否共用材料坐标系，以及 Lc 是否只乘在耦合段上、没有乘整圈。</p></div>
+
+<h2>4　叉指周期：把声频调到 3.33 GHz</h2>
+<ol>
+  <li>新模型，2D。Solid Mechanics + Electrostatics，Multiphysics 加 Piezoelectric Effect。Study 用 Eigenfrequency。</li>
+  <li>只画一个周期，不要画整圈。周期宽度 p 是一个正指加一个负指的总宽，大约 1 µm 量级；电极厚度没有工艺数时先用 100 nm 铝，铌酸锂厚度与第二部分相同。左右两边用 Periodic Condition。衬底底边固定或加低反射层。这块板是悬空层时，底边不要固定死在厚硅上。</li>
+  <li>一个电极 Terminal 1 V，另一个 Ground。晶体轴与第二部分相同。</li>
+  <li>搜索 3.33 GHz 附近的本征频率。扫 p，直到有一个能量集中在铌酸锂表层的模式落在 3.33 GHz ± 50 MHz。</li>
+  <li>记下此时的 p、电极宽、以及这个模式的频率和它与相邻模式的间隔。</li>
+</ol>
+<div class="warn"><p>这一步给出的是掩模上的指间距，不是论文里的 Qm。Qm = 2000 或 3600 来自整颗谐振器的锚点损耗，二维单周期看不出来。Qm 先沿用论文：计算用 2000，保守功率用 1570，测到过的上限是 3600。不要把二维本征值的虚部当成 Qm。</p></div>
+
+<h2>5　光弹：每伏能把共振推多远</h2>
+<p>电极上加的是第四部分那个 1 V 的解。应变改变折射率，模式的 neff 跟着变，再用论文式 (2) 换成整颗环的频率移动。</p>
+<ol>
+  <li>在光学模型里把第四部分的应变导进来，或把应变分量做成参数。优先用材料库里铌酸锂的光弹系数把应变写成 Δε。库里没有系数时，先只做「应变已换成 Δn」的流程，系数表单独注明出处，不要默默使用一组记不清符号的数。</li>
+  <li>对加应变和不加应变各算一次第二部分的导模，得到 Δneff。</li>
+  <li>100 µm 作用长度上的相位，以及整圈造成的频率移动：</li>
+</ol>
+<div class="eq">Δφ = 2*pi/λ · Δneff · La ， La = 100[µm]<br>δf = Δφ · c / (2*pi · ng · Lring)</div>
+<p>这就是式 (2)。δf 的单位是 Hz，除以电极电压 1 V，就是你的每伏频移。</p>
+<div class="eq">ξ = （你的 δf，单位 GHz/V） / 21.3</div>
+<div class="ok"><p><strong>对上了：</strong>ξ 在 0.3–2 之间都可以往下做。论文把 21.3 GHz/V 定为 ξ = 1，那是邵 2019 直波导的外推，不是你这个截面的测量。ξ 小于 0.5 时，第五部分的功率表会升到几百微瓦以上，仍可以记录，但要在第七部分显式写出来。</p></div>
+<div class="warn"><p>若 δf 是在电极 1 V 下直接算的，它已经包含模型里的机电耦合。后面的源功率用 P = V²/(2×50 Ω)，不要再乘叉指效率，否则算重了。叉指效率只在你故意把结果归一化到邵的 21.3 GHz/V 时才另乘。</p></div>
+
+<h2>6　加热器：相位和串扰</h2>
+<ol>
+  <li>2D 截面。两根波导，间距用第三部分选定的 g。一臂外侧放金属条，离脊 1–2 µm，不要压在光模上。材料用工艺里的加热金属；没有就先用金，厚度 100 nm，并写进记录表。</li>
+  <li>Electric Currents 加 Heat Transfer in Solids，稳态。金属两端加电压，扫电压。用面积分 J·E 得到热功率 P。</li>
+  <li>读三个温度：加热臂中心、环 1 波导中心、环 2 波导中心。环境温度 293 K，底边设为散热边界；散热系数没有工艺数时先用自然对流的量级并注明，这是本步最大的不确定量。</li>
+  <li>相位用你第二部分的 ng 所对应的热光系数路径来算。论文用 dne/dT = 3.34e−5 /K：</li>
+</ol>
+<div class="eq">Δφ = 2*pi/λ · (dne/dT) · (T臂 − T环境) · Lheater<br>Pπ = 使 Δφ = π 的功率</div>
+<p>两环频差用温度差乘 df/dT。论文的热光一项大约 2.8 GHz/K；加上体膨胀大约 5.6 GHz/K。更干净的做法是把第二部分的模式在两个温度下再算一次，用你自己的 df/dT。</p>
+<div class="warn"><p>论文里的 44.4 mW 是别人约 1 mm 金加热臂的数，2 mK / 3 mK 是假定的串扰，都不是你要去凑的目标。你的 Pπ 和两环温差才写进第七部分。20 mW 附近若两环温差已经到几十毫开，就不要再引用 96.4% 的成品率。</p></div>
+
+<h2>7　把你的数代回全局方程</h2>
+<ol>
+  <li>回到第一部分那个文件。ng 只影响你怎么把 δf 换成电压，不改微分方程里的 gamma。</li>
+  <li>对 domega 做参数扫描：2*pi*range(0.2,0.05,1.0)[GHz]。每个点读 eta。取 eta 最大的那个 δf，记为 δfopt。理想参数下它应靠近 0.55 GHz。</li>
+  <li>电压和源功率：</li>
+</ol>
+<div class="eq">V = δfopt / (21.3[GHz/V] · ξ)<br>P = V^2 / (2*50[ohm])</div>
+<p>只有当你的 ξ 是相对邵的 21.3 定义、并且邵的校准含大约 50% 叉指效率和 Qm = 2000 时，才另外乘：</p>
+<div class="eq">P源 = P · (0.5/ηIDT) · (2000/Qm)</div>
+<p>ηIDT 取 0.1 和 0.5 各算一次。Qm 取 1570、2000、3600 各算一次。ξ = 0.3、0.5、1、2 再各算一次。论文在 ξ = 0.5、ηIDT = 10%、Qm = 1570 时是 172 µW；ξ = 1 时同一效率和 Q 是 43 µW。你的 ξ 来自第五部分之后，这张表会整体乘 1/ξ²，不必和 172 重合。</p>
+<div class="ok"><p><strong>这一步的结果才是你自己的工作点。</strong>记录 η、dBm1、dB0、V 和 P源。理想参数复现的 98.3% 和 6.7 µW 留在第一页，当作软件操作是否正确的检查，不当作器件预测。</p></div>
+
+<h2>8　公差：仍在全局方程里扫</h2>
+<p>下面每一项都只改一个参数，几何不再重画。</p>
+<table class="data">
+  <thead><tr><th>扫描</th><th>怎么改参数</th><th>论文里用来对照的行为</th></tr></thead>
+  <tbody>
+    <tr><td>内禀损耗</td><td>kappai 乘 1、2、5</td><td>乘 2 时移频比仍高，插损变大；乘 5 时移频比明显下降</td></tr>
+    <tr><td>声频对不齐</td><td>保持 mu，把方程里的 Omega 换成 Omega·(1+df/fa)，并把 domega 乘 1/sqrt(1+(2·Qm·df/fa)^2)，Qm = 2000</td><td>偏 1 MHz 时 ηshift 约 80%，偏 2 MHz 约 44%</td></tr>
+    <tr><td>裂距误差</td><td>mu 改成 Omega/2 + 2*pi·δf，δf 从 −200 MHz 扫到 200 MHz；Omega 不动</td><td>约 −96 MHz 到 +53 MHz 内，理想模型的 ηshift 仍不低于 95%</td></tr>
+    <tr><td>锁频温差</td><td>δf = (df/dT)·δT，df/dT 用你第六部分的值；δT = 1、5、10、20 mK，加到 Delta 上</td><td>论文用 5.6 GHz/K 时，±9.8 mK 对应 ηshift ≥ 95% 的理想窗口</td></tr>
+  </tbody>
+</table>
+<p>加热器若能把裂距拉回声频，裂距误差一项改成残差再送进上表，不要和温差重复加两次。1000 个随机样本只允许加在这个全局方程上：外部做一列「间隙、温度」，导进 Parametric Sweep。三维模型不要进这 1000 次。电脑慢就先跑 30 个样本，看中位数是否还在动。</p>
+<p>插损用出口各频率分量的总功率比输入。论文理想插损 2.5 dB；κi×2 的中位插损 4.72 dB。你的 kappai 没改时，应靠近 2.5 dB，而不是靠近 4.72 dB。</p>
+
+<h2>9　热声子和 HOM：不要建三维模型</h2>
+<p>热声子数是公式，不是场仿真。f = 3.33 GHz、T = 300 K 时，</p>
+<div class="eq">nth = 1 / (exp(h·f/(kB·T)) − 1) = 1877</div>
+<p>论文在工作点给出相干声子数约 1.75×10¹¹，所以 nth/Ncoh ≈ 1.1×10⁻⁸。自发散射上界 nth·C0 ≈ 8.0×10⁻⁶，用的是 g0/2π = 1.1 kHz 和这颗环的光学线宽。这两行写进记录表即可。</p>
+<p>HOM 用第一部分的文件做参数扫描：Delta 在工作点两侧各取若干点，每个点记录 c1r 和 c1i，这就是 q = +1 通道的复传递函数 H。点数按论文取 41 个，范围盖住光子频谱的 ±4 个标准差。可见度是论文式 (3) 对这 41 个复数的求和，在表格里算。不要为 HOM 再画器件。不加滤波时，可见度应接近你第七部分的 eta；10 MHz 光子、滤波之后 1−V 很小，那是线宽 0.6 GHz 的腔对窄谱几乎是平的，不是新的器件结果。</p>
+
+<h2>10　记录表</h2>
+<p>每一格填你的数。论文列只用来发现操作错误，不用来改你的几何。</p>
+<table class="data">
+  <thead><tr><th>项目</th><th>论文对照</th><th>我的结果</th><th>几何或出处</th></tr></thead>
+  <tbody>
+    <tr><td>第一部分 eta / dBm1 / dB0</td><td>0.983 / −21.2 / −23.2</td><td></td><td>全局方程，论文参数</td></tr>
+    <tr><td>ng</td><td>2.3（假定）</td><td></td><td></td></tr>
+    <tr><td>最大裂距 Δf</td><td>约 4.71 GHz</td><td></td><td>g = ，Lc = </td></tr>
+    <tr><td>声周期 p、频率</td><td>3.33 GHz</td><td></td><td></td></tr>
+    <tr><td>δf（1 V）与 ξ</td><td>21.3 GHz/V，ξ = 1</td><td></td><td></td></tr>
+    <tr><td>Pπ、两环温差</td><td>44.4 mW、2/3 mK 为假定</td><td></td><td></td></tr>
+    <tr><td>δfopt、eta、P源</td><td>0.55 GHz、98.3%、6.7 µW 为理想</td><td></td><td>ξ、ηIDT、Qm 写在旁边</td></tr>
+    <tr><td>kappai×2 的 eta 与插损</td><td>移频比仍高，插损约 4.7 dB 量级</td><td></td><td></td></tr>
+    <tr><td>偏频 1 MHz 的 eta</td><td>约 80%</td><td></td><td>Qm = 2000</td></tr>
+  </tbody>
+</table>
+
+<div class="lead">
+  <p><strong>做完的判据。</strong>第一部分在论文参数下接近 98% 和 −21 dB，说明方程和步长是对的。第二到六部分各有一行自己的数，并且第七部分用这些数重新给出了 eta 和 P源。加热器温差若远大于 2 mK，成品率一栏留空，不要抄论文的 96.4%。</p>
+</div>
+</body>
+</html>
